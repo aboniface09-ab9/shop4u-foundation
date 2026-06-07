@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
+
 import { useCart, SHIPPING_FLAT, VAT_RATE } from "@/store/cart";
+import { useCreateOrder } from "@/data/orders";
+import { getProvider } from "@/lib/payment";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,21 +23,72 @@ const PROVINCES = [
 ];
 
 function Checkout() {
-  const { items, subtotal } = useCart();
+  const { items, subtotal, clear } = useCart();
   const sub = subtotal();
   const shipping = items.length ? SHIPPING_FLAT : 0;
   const vat = Math.round((sub + shipping) * VAT_RATE);
   const total = sub + shipping + vat;
 
   const [province, setProvince] = useState("Western Cape");
+  const [busy, setBusy] = useState(false);
+  const createOrder = useCreateOrder();
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Ready for payment", {
-      description:
-        "In production this hands off to a hosted payment page (Yoco / Peach Payments / Paystack). No real charge — demo build.",
-      duration: 6000,
-    });
+    setBusy(true);
+
+    const form = new FormData(e.currentTarget as HTMLFormElement);
+    const email = String(form.get("email") ?? "");
+    const mobile = String(form.get("mobile") ?? "");
+    const firstName = String(form.get("firstName") ?? "");
+    const lastName = String(form.get("lastName") ?? "");
+    const address = String(form.get("address") ?? "");
+    const suburb = String(form.get("suburb") ?? "");
+    const city = String(form.get("city") ?? "");
+    const postal = String(form.get("postal") ?? "");
+
+    try {
+      // 1. Create the pending order in Supabase.
+      const order = await createOrder.mutateAsync({
+        customerName: `${firstName} ${lastName}`.trim(),
+        customerEmail: email,
+        customerPhone: mobile,
+        shippingAddress: { line1: address, suburb, city, postal, province },
+        items: items.map((i) => ({
+          productSlug: i.id,
+          name: i.name,
+          size: i.size,
+          qty: i.qty,
+          price: i.price,
+        })),
+        subtotal: sub,
+        shipping,
+        vat,
+        total,
+      });
+
+      // 2. Ask the active payment provider for a hosted-page session.
+      const provider = getProvider();
+      const origin = window.location.origin;
+      const session = await provider.createCheckoutSession({
+        orderReference: order.id, // order_number, e.g. "FND-1043"
+        amountCents: Math.round(total * 100),
+        currency: "ZAR",
+        customerEmail: email,
+        customerName: `${firstName} ${lastName}`.trim(),
+        returnUrl: `${origin}/order/${order.id}`,
+        cancelUrl: `${origin}/checkout?cancelled=${order.id}`,
+      });
+
+      // 3. Clear the cart locally and redirect to the gateway.
+      clear();
+      window.location.href = session.redirectUrl;
+    } catch (err) {
+      setBusy(false);
+      toast.error("Couldn't start payment", {
+        description: err instanceof Error ? err.message : "Please try again.",
+      });
+    }
   };
 
   if (items.length === 0) {
@@ -76,11 +130,20 @@ function Checkout() {
                     {PROVINCES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {/* Hidden field so FormData picks up the province value */}
+                <input type="hidden" name="province" value={province} />
               </div>
             </div>
           </Section>
 
-          <Button type="submit" size="lg" className="w-full">Continue to payment</Button>
+          <Button type="submit" size="lg" className="w-full" disabled={busy}>
+            {busy ? "Redirecting to payment…" : "Continue to payment"}
+          </Button>
+
+          <p className="text-[11px] text-muted text-center">
+            You&apos;ll be redirected to our payment provider&apos;s secure page.
+            We never see your card details.
+          </p>
         </div>
 
         <aside className="md:col-span-5">
@@ -122,7 +185,7 @@ function Field({ id, label, ...rest }: { id: string; label: string } & React.Inp
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} {...rest} />
+      <Input id={id} name={id} {...rest} />
     </div>
   );
 }

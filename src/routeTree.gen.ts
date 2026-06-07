@@ -17,6 +17,8 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
+import { Route as OrderRefRouteImport } from './routes/order.$ref'
+import { Route as MockGatewayRefRouteImport } from './routes/mock-gateway.$ref'
 import { Route as AdminThemeRouteImport } from './routes/admin.theme'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
@@ -64,6 +66,16 @@ const ProductIdRoute = ProductIdRouteImport.update({
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrderRefRoute = OrderRefRouteImport.update({
+  id: '/order/$ref',
+  path: '/order/$ref',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MockGatewayRefRoute = MockGatewayRefRouteImport.update({
+  id: '/mock-gateway/$ref',
+  path: '/mock-gateway/$ref',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminThemeRoute = AdminThemeRouteImport.update({
   id: '/theme',
   path: '/theme',
@@ -107,6 +119,8 @@ export interface FileRoutesByFullPath {
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/theme': typeof AdminThemeRoute
+  '/mock-gateway/$ref': typeof MockGatewayRefRoute
+  '/order/$ref': typeof OrderRefRoute
   '/product/$id': typeof ProductIdRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/products/new': typeof AdminProductsNewRoute
@@ -122,6 +136,8 @@ export interface FileRoutesByTo {
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/theme': typeof AdminThemeRoute
+  '/mock-gateway/$ref': typeof MockGatewayRefRoute
+  '/order/$ref': typeof OrderRefRoute
   '/product/$id': typeof ProductIdRoute
   '/admin': typeof AdminIndexRoute
   '/admin/products/new': typeof AdminProductsNewRoute
@@ -139,6 +155,8 @@ export interface FileRoutesById {
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/theme': typeof AdminThemeRoute
+  '/mock-gateway/$ref': typeof MockGatewayRefRoute
+  '/order/$ref': typeof OrderRefRoute
   '/product/$id': typeof ProductIdRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/products/new': typeof AdminProductsNewRoute
@@ -157,6 +175,8 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/settings'
     | '/admin/theme'
+    | '/mock-gateway/$ref'
+    | '/order/$ref'
     | '/product/$id'
     | '/admin/'
     | '/admin/products/new'
@@ -172,6 +192,8 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/settings'
     | '/admin/theme'
+    | '/mock-gateway/$ref'
+    | '/order/$ref'
     | '/product/$id'
     | '/admin'
     | '/admin/products/new'
@@ -188,6 +210,8 @@ export interface FileRouteTypes {
     | '/admin/products'
     | '/admin/settings'
     | '/admin/theme'
+    | '/mock-gateway/$ref'
+    | '/order/$ref'
     | '/product/$id'
     | '/admin/'
     | '/admin/products/new'
@@ -200,6 +224,8 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRoute
   LoginRoute: typeof LoginRoute
   ShopRoute: typeof ShopRoute
+  MockGatewayRefRoute: typeof MockGatewayRefRoute
+  OrderRefRoute: typeof OrderRefRoute
   ProductIdRoute: typeof ProductIdRoute
 }
 
@@ -259,6 +285,20 @@ declare module '@tanstack/react-router' {
       path: '/product/$id'
       fullPath: '/product/$id'
       preLoaderRoute: typeof ProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order/$ref': {
+      id: '/order/$ref'
+      path: '/order/$ref'
+      fullPath: '/order/$ref'
+      preLoaderRoute: typeof OrderRefRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mock-gateway/$ref': {
+      id: '/mock-gateway/$ref'
+      path: '/mock-gateway/$ref'
+      fullPath: '/mock-gateway/$ref'
+      preLoaderRoute: typeof MockGatewayRefRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/theme': {
@@ -345,6 +385,8 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRoute,
   LoginRoute: LoginRoute,
   ShopRoute: ShopRoute,
+  MockGatewayRefRoute: MockGatewayRefRoute,
+  OrderRefRoute: OrderRefRoute,
   ProductIdRoute: ProductIdRoute,
 }
 export const routeTree = rootRouteImport

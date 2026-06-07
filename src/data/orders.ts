@@ -93,9 +93,20 @@ export type CreateOrderInput = {
 };
 
 /**
- * Insert a new order. The order_number is computed on the client as
- * "FND-" + (1042 + existing count). Good enough for v1; switch to a
- * Postgres sequence when concurrency matters.
+ * Insert a new order at checkout.
+ *
+ * Notes on RLS-safety:
+ * - The customer is anonymous (no auth) so we can't SELECT orders before
+ *   or after the INSERT — the v1 RLS only lets authenticated merchants
+ *   read orders. We therefore (a) generate the order_number client-side
+ *   without counting, and (b) don't try to read back the inserted row.
+ * - The returned Order is shaped from the input + the generated
+ *   reference; the merchant admin will see the real row once they next
+ *   load /admin/orders (which runs under their authenticated session).
+ *
+ * Future: when a server-side webhook receiver exists (Cloudflare Worker
+ * with service-role key), order_number generation can move to a Postgres
+ * sequence and the INSERT can use the service role to bypass RLS.
  */
 export function useCreateOrder() {
   const tenantId = useTenantId();
@@ -104,13 +115,9 @@ export function useCreateOrder() {
     mutationFn: async (input: CreateOrderInput): Promise<Order> => {
       if (!tenantId) throw new Error("No tenant resolved");
 
-      // Compute order_number from current count.
-      const { count, error: countError } = await supabase
-        .from("orders")
-        .select("*", { count: "exact", head: true })
-        .eq("tenant_id", tenantId);
-      if (countError) throw countError;
-      const orderNumber = `FND-${1042 + (count ?? 0)}`;
+      // Compact, sortable-ish reference that doesn't require a SELECT
+      // to generate. e.g. "FND-LX2N9K". Collision-resistant in practice.
+      const orderNumber = `FND-${Date.now().toString(36).toUpperCase()}`;
 
       const items: OrderItemJson[] = input.items.map((i) => ({
         product_slug: i.productSlug,
@@ -120,7 +127,7 @@ export function useCreateOrder() {
         price_cents: Math.round(i.price * 100),
       }));
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("orders")
         .insert({
           tenant_id: tenantId,
@@ -135,11 +142,24 @@ export function useCreateOrder() {
           vat_cents: Math.round(input.vat * 100),
           total_cents: Math.round(input.total * 100),
           status: "pending",
-        })
-        .select("*")
-        .single();
+        });
       if (error) throw error;
-      return mapOrder(data as OrderRow);
+
+      // Synthesize the Order from input — no read-back needed.
+      return {
+        id: orderNumber,
+        customer: input.customerName,
+        items: items.map((i) => ({
+          productId: i.product_slug,
+          name: i.name,
+          size: i.size,
+          qty: i.qty,
+          price: i.price_cents / 100,
+        })),
+        total: input.total,
+        status: "pending",
+        date: new Date().toISOString(),
+      };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["orders", tenantId] });
