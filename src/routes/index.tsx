@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-import { products } from "@/data/products";
+import { useProducts } from "@/data/products";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductImage } from "@/components/ProductImage";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,11 @@ export const Route = createFileRoute("/")({
 const CATEGORIES = ["Tops", "Bottoms", "Headwear", "Accessories"] as const;
 
 function Home() {
+  const { data: products = [] } = useProducts();
   const featured = products.slice(0, 4);
-  const hero = products[4]; // Stadium Jacket — the big drop
+  // Prefer the Stadium Jacket as hero; fall back to first product if not loaded yet.
+  const hero =
+    products.find((p) => p.id === "stadium-jacket") ?? products[0];
 
   return (
     <div>
@@ -44,18 +47,22 @@ function Home() {
             </div>
           </div>
           <div className="md:col-span-6">
-            <Link
-              to="/product/$id"
-              params={{ id: hero.id }}
-              className="block aspect-[4/5] overflow-hidden rounded-lg"
-            >
-              <ProductImage
-                name={hero.name}
-                category={hero.category}
-                color={hero.imageColor}
-                size="lg"
-              />
-            </Link>
+            {hero ? (
+              <Link
+                to="/product/$id"
+                params={{ id: hero.id }}
+                className="block aspect-[4/5] overflow-hidden rounded-lg"
+              >
+                <ProductImage
+                  name={hero.name}
+                  category={hero.category}
+                  color={hero.imageColor}
+                  size="lg"
+                />
+              </Link>
+            ) : (
+              <div className="block aspect-[4/5] overflow-hidden rounded-lg bg-surface" />
+            )}
           </div>
         </div>
       </section>
@@ -70,11 +77,16 @@ function Home() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {CATEGORIES.map((c) => {
-            const seed = products.find((p) => p.category === c)!;
+            const seed = products.find((p) => p.category === c);
             return (
               <Link key={c} to="/shop" className="block aspect-square overflow-hidden rounded-md group">
                 <div className="h-full w-full transition-transform duration-500 group-hover:scale-105">
-                  <ProductImage name={c} category="Category" color={seed.imageColor} size="md" />
+                  <ProductImage
+                    name={c}
+                    category="Category"
+                    color={seed?.imageColor ?? "#1A1714"}
+                    size="md"
+                  />
                 </div>
               </Link>
             );

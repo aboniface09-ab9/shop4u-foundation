@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { orders } from "@/data/orders";
+import { useOrders } from "@/data/orders";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatZAR } from "@/lib/format";
 
@@ -8,7 +8,8 @@ export const Route = createFileRoute("/admin/customers")({
 });
 
 function CustomersAdmin() {
-  // Group orders by customer (mock — no real customer table yet).
+  const { data: orders = [] } = useOrders();
+  // Group orders by customer (no real customer table yet — derived from orders).
   const map = new Map<string, { name: string; count: number; spend: number }>();
   for (const o of orders) {
     const prev = map.get(o.customer) ?? { name: o.customer, count: 0, spend: 0 };

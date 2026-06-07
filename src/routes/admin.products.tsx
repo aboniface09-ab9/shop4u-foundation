@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { products } from "@/data/products";
+import { useProducts } from "@/data/products";
 import { ProductImage } from "@/components/ProductImage";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,12 +12,15 @@ export const Route = createFileRoute("/admin/products")({
 });
 
 function ProductsAdmin() {
+  const { data: products = [], isLoading } = useProducts();
   return (
     <div className="p-6 md:p-10 max-w-7xl">
       <header className="flex justify-between items-end mb-8">
         <div>
           <h1 className="font-heading text-3xl font-semibold">Products</h1>
-          <p className="text-muted text-sm">{products.length} live products</p>
+          <p className="text-muted text-sm">
+            {isLoading ? "Loading…" : `${products.length} live products`}
+          </p>
         </div>
         <Button asChild>
           <Link to="/admin/products/new"><Plus size={16} className="mr-2" /> New product</Link>

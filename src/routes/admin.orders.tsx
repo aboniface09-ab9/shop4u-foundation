@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { orders, OrderStatus } from "@/data/orders";
+import { useOrders, type OrderStatus } from "@/data/orders";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatZAR, formatDate } from "@/lib/format";
 import { StatusBadge } from "./admin.index";
@@ -13,6 +13,7 @@ const STATUSES: ("all" | OrderStatus)[] = ["all", "pending", "paid", "fulfilled"
 
 function OrdersAdmin() {
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
+  const { data: orders = [] } = useOrders();
   const list = orders.filter((o) => filter === "all" || o.status === filter);
 
   return (

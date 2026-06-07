@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { useThemeStore, THEME_PRESETS, LAYOUT_PRESETS } from "@/store/theme";
-import { products } from "@/data/products";
+import { useProducts } from "@/data/products";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProductImage } from "@/components/ProductImage";
@@ -14,6 +14,7 @@ export const Route = createFileRoute("/admin/theme")({
 
 function ThemeEditor() {
   const { theme, layout, storeName, logoMark, setTheme, setLayout, setStoreName, setLogoMark } = useThemeStore();
+  const { data: products = [] } = useProducts();
   const previewProduct = products[0];
 
   return (
@@ -108,12 +109,25 @@ function ThemeEditor() {
                 <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">Bag (0)</span>
               </div>
               <div className="aspect-[4/5]">
-                <ProductImage name={previewProduct.name} category={previewProduct.category} color={previewProduct.imageColor} size="md" />
+                {previewProduct ? (
+                  <ProductImage
+                    name={previewProduct.name}
+                    category={previewProduct.category}
+                    color={previewProduct.imageColor}
+                    size="md"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-surface" />
+                )}
               </div>
               <div className="p-3">
                 <div className="flex justify-between">
-                  <span className="font-heading font-semibold">{previewProduct.name}</span>
-                  <span className="font-mono text-sm">R1 290</span>
+                  <span className="font-heading font-semibold">
+                    {previewProduct?.name ?? "Loading…"}
+                  </span>
+                  <span className="font-mono text-sm">
+                    {previewProduct ? `R${previewProduct.price.toLocaleString("en-ZA")}` : ""}
+                  </span>
                 </div>
                 <Button size="sm" className="w-full mt-3">Add to bag</Button>
               </div>

@@ -1,3 +1,15 @@
+import { useQuery } from "@tanstack/react-query";
+
+import { supabase, type ProductRow } from "@/lib/supabase";
+import { useTenantId } from "@/store/tenant";
+
+// =========================================================================
+// App-level Product type. Kept identical to what the rest of the app
+// already uses, so consumers don't need to change anything except their
+// data source. Prices stay in ZAR rand (not cents) at the app boundary;
+// the mapper below converts from the DB's price_cents.
+// =========================================================================
+
 export type ProductCategory = "Tops" | "Bottoms" | "Headwear" | "Accessories";
 
 export type Product = {
@@ -11,89 +23,57 @@ export type Product = {
   imageColor: string; // hex — drives gradient placeholder
 };
 
-export const products: Product[] = [
-  {
-    id: "heritage-hoodie",
-    name: "Heritage Hoodie",
-    category: "Tops",
-    price: 1290,
-    description:
-      "Heavyweight 400gsm loopback cotton, boxy cut, garment-dyed in small batches at our Salt River workshop.",
-    sizes: ["S", "M", "L", "XL"],
-    stock: 24,
-    imageColor: "#C25E2B",
-  },
-  {
-    id: "block-tee",
-    name: "Block Tee",
-    category: "Tops",
-    price: 420,
-    description:
-      "Mid-weight 240gsm jersey with a dropped shoulder and ribbed crew. The everyday Foundry staple.",
-    sizes: ["XS", "S", "M", "L", "XL"],
-    stock: 62,
-    imageColor: "#1A1714",
-  },
-  {
-    id: "court-cap",
-    name: "Court Cap",
-    category: "Headwear",
-    price: 380,
-    description: "Six-panel unstructured cap in washed cotton twill. Brass buckle strap.",
-    sizes: ["One Size"],
-    stock: 41,
-    imageColor: "#2D4A3E",
-  },
-  {
-    id: "cargo-shorts",
-    name: "Cargo Shorts",
-    category: "Bottoms",
-    price: 890,
-    description: "Relaxed mid-length cargo cut from washed ripstop. Six pockets, taped seams.",
-    sizes: ["28", "30", "32", "34", "36"],
-    stock: 18,
-    imageColor: "#8A6F4A",
-  },
-  {
-    id: "stadium-jacket",
-    name: "Stadium Jacket",
-    category: "Tops",
-    price: 2490,
-    description: "Bonded wool-blend body, leather sleeves, ribbed cuffs. Snap front, lined.",
-    sizes: ["S", "M", "L", "XL"],
-    stock: 6,
-    imageColor: "#3B2A1F",
-  },
-  {
-    id: "studio-tote",
-    name: "Studio Tote",
-    category: "Accessories",
-    price: 540,
-    description: "20L waxed canvas tote with leather grips. Built to outlast the season.",
-    sizes: ["One Size"],
-    stock: 33,
-    imageColor: "#D9C7A6",
-  },
-  {
-    id: "court-socks",
-    name: "Court Socks",
-    category: "Accessories",
-    price: 120,
-    description: "Combed cotton crew socks with terry footbed. Pack of two.",
-    sizes: ["S/M", "L/XL"],
-    stock: 88,
-    imageColor: "#E7E1D6",
-  },
-  {
-    id: "watch-beanie",
-    name: "Watch Beanie",
-    category: "Headwear",
-    price: 290,
-    description: "Fine-gauge merino watch cap. Folded cuff, woven Foundry label.",
-    sizes: ["One Size"],
-    stock: 4,
-    imageColor: "#0E0E0F",
-  },
-];
+function mapProduct(row: ProductRow): Product {
+  return {
+    id: row.slug, // app addresses products by slug ("heritage-hoodie"), not uuid
+    name: row.name,
+    category: row.category as ProductCategory,
+    price: row.price_cents / 100,
+    description: row.description ?? "",
+    sizes: row.sizes ?? [],
+    stock: row.stock,
+    imageColor: row.image_color ?? "#1A1714",
+  };
+}
 
-export const getProduct = (id: string) => products.find((p) => p.id === id);
+// =========================================================================
+// Hooks
+// =========================================================================
+
+/** All active products for the current tenant. */
+export function useProducts() {
+  const tenantId = useTenantId();
+  return useQuery({
+    queryKey: ["products", tenantId],
+    enabled: !!tenantId,
+    queryFn: async (): Promise<Product[]> => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("tenant_id", tenantId!)
+        .eq("status", "active")
+        .order("name");
+      if (error) throw error;
+      return (data as ProductRow[]).map(mapProduct);
+    },
+  });
+}
+
+/** A single product by slug (the app-level id). */
+export function useProduct(id: string | undefined) {
+  const tenantId = useTenantId();
+  return useQuery({
+    queryKey: ["product", tenantId, id],
+    enabled: !!tenantId && !!id,
+    queryFn: async (): Promise<Product | null> => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("tenant_id", tenantId!)
+        .eq("slug", id!)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? mapProduct(data as ProductRow) : null;
+    },
+  });
+}

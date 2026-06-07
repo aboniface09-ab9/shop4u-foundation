@@ -1,33 +1,48 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { ArrowLeft, ShoppingBag } from "lucide-react";
-import { getProduct } from "@/data/products";
+import { useProduct } from "@/data/products";
 import { ProductImage } from "@/components/ProductImage";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/cart";
 import { formatZAR } from "@/lib/format";
 
 export const Route = createFileRoute("/product/$id")({
-  loader: ({ params }) => {
-    const product = getProduct(params.id);
-    if (!product) throw notFound();
-    return { product };
-  },
-  notFoundComponent: () => (
-    <div className="mx-auto max-w-2xl px-4 py-32 text-center">
-      <h1 className="font-heading text-4xl font-semibold">Product not found</h1>
-      <Link to="/shop" className="text-primary underline mt-4 inline-block">Back to shop</Link>
-    </div>
-  ),
   component: ProductPage,
 });
 
 function ProductPage() {
-  const { product } = Route.useLoaderData();
-  const [size, setSize] = useState(product.sizes[0]);
+  const { id } = Route.useParams();
+  const { data: product, isLoading } = useProduct(id);
+  const [size, setSize] = useState<string | undefined>(undefined);
   const add = useCart((s) => s.add);
 
+  // Pick the first size as default once the product loads.
+  useEffect(() => {
+    if (product && !size) setSize(product.sizes[0]);
+  }, [product, size]);
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-32 text-center text-muted">
+        Loading…
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-32 text-center">
+        <h1 className="font-heading text-4xl font-semibold">Product not found</h1>
+        <Link to="/shop" className="text-primary underline mt-4 inline-block">
+          Back to shop
+        </Link>
+      </div>
+    );
+  }
+
   const handleAdd = () => {
+    if (!size) return;
     add({
       id: product.id,
       name: product.name,
@@ -41,7 +56,10 @@ function ProductPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 md:px-8 py-8 md:py-14">
-      <Link to="/shop" className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted hover:text-text mb-8">
+      <Link
+        to="/shop"
+        className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted hover:text-text mb-8"
+      >
         <ArrowLeft size={14} /> Back to shop
       </Link>
 

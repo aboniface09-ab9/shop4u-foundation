@@ -17,6 +17,7 @@ import { Footer } from "@/components/Footer";
 import { CartDrawer } from "@/components/CartDrawer";
 import { DevPanel } from "@/components/DevPanel";
 import { applyTheme, useThemeStore } from "@/store/theme";
+import { useTenantBootstrap } from "@/store/tenant";
 
 function NotFoundComponent() {
   return (
@@ -86,15 +87,34 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppShell />
+    </QueryClientProvider>
+  );
+}
+
+/**
+ * Inner shell — split out so it can use React Query hooks
+ * (useTenantBootstrap), which require the QueryClientProvider to already
+ * be in the tree above them.
+ */
+function AppShell() {
   const { theme, layout } = useThemeStore();
   const { pathname } = useLocation();
   const isAdmin = pathname.startsWith("/admin");
 
-  // Re-apply theme tokens whenever the preset changes.
+  // Bootstrap the current tenant by VITE_TENANT_SLUG on app load.
+  // Hydrates store name, logo mark, and initial theme preset from the row.
+  useTenantBootstrap();
+
+  // Re-apply theme tokens whenever the preset changes (theme can be
+  // changed locally via DevPanel / theme editor even after bootstrap).
   useEffect(() => { applyTheme(theme, layout); }, [theme, layout]);
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <div className="min-h-screen flex flex-col bg-bg text-text">
         {!isAdmin && <Header />}
         <main className="flex-1">
@@ -105,6 +125,6 @@ function RootComponent() {
       <CartDrawer />
       <DevPanel />
       <Toaster />
-    </QueryClientProvider>
+    </>
   );
 }

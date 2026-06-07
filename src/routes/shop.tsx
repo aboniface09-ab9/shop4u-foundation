@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { products, ProductCategory } from "@/data/products";
+import { useProducts, type ProductCategory } from "@/data/products";
 import { ProductCard } from "@/components/ProductCard";
 
 export const Route = createFileRoute("/shop")({
@@ -17,13 +17,14 @@ const SORTS = [
 function Shop() {
   const [cat, setCat] = useState<(ProductCategory | "All")>("All");
   const [sort, setSort] = useState<typeof SORTS[number]["id"]>("featured");
+  const { data: products = [], isLoading } = useProducts();
 
   const list = useMemo(() => {
     let l = products.filter((p) => cat === "All" || p.category === cat);
     if (sort === "low") l = [...l].sort((a, b) => a.price - b.price);
     if (sort === "high") l = [...l].sort((a, b) => b.price - a.price);
     return l;
-  }, [cat, sort]);
+  }, [cat, sort, products]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 md:px-8 py-10 md:py-16">
@@ -64,8 +65,11 @@ function Shop() {
         {list.map((p) => <ProductCard key={p.id} product={p} />)}
       </div>
 
-      {list.length === 0 && (
+      {!isLoading && list.length === 0 && (
         <p className="text-center text-muted py-20">No products in this category yet.</p>
+      )}
+      {isLoading && (
+        <p className="text-center text-muted py-20">Loading the drop…</p>
       )}
     </div>
   );

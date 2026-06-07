@@ -1,4 +1,24 @@
-export type OrderStatus = "pending" | "paid" | "fulfilled" | "refunded" | "cancelled";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import {
+  supabase,
+  type OrderItemJson,
+  type OrderRow,
+  type ShippingAddressJson,
+} from "@/lib/supabase";
+import { useTenantId } from "@/store/tenant";
+
+// =========================================================================
+// App-level Order type — same shape the existing components already
+// consume. Prices stay in ZAR rand; mapper converts from DB cents.
+// =========================================================================
+
+export type OrderStatus =
+  | "pending"
+  | "paid"
+  | "fulfilled"
+  | "refunded"
+  | "cancelled";
 
 export type OrderItem = {
   productId: string;
@@ -9,67 +29,120 @@ export type OrderItem = {
 };
 
 export type Order = {
-  id: string;
+  id: string; // order_number, e.g. "FND-1042"
   customer: string;
   items: OrderItem[];
-  total: number;
+  total: number; // ZAR
   status: OrderStatus;
-  date: string; // ISO
+  date: string; // ISO timestamp from created_at
 };
 
-export const orders: Order[] = [
-  {
-    id: "FND-1042",
-    customer: "Thandi Nkosi",
-    items: [{ productId: "heritage-hoodie", name: "Heritage Hoodie", size: "M", qty: 1, price: 1290 }],
-    total: 1365,
-    status: "paid",
-    date: "2026-05-15T09:14:00Z",
-  },
-  {
-    id: "FND-1041",
-    customer: "Liam van der Merwe",
-    items: [
-      { productId: "block-tee", name: "Block Tee", size: "L", qty: 2, price: 420 },
-      { productId: "court-socks", name: "Court Socks", size: "L/XL", qty: 1, price: 120 },
-    ],
-    total: 1035,
-    status: "fulfilled",
-    date: "2026-05-14T16:02:00Z",
-  },
-  {
-    id: "FND-1040",
-    customer: "Aisha Patel",
-    items: [{ productId: "stadium-jacket", name: "Stadium Jacket", size: "S", qty: 1, price: 2490 }],
-    total: 2565,
-    status: "pending",
-    date: "2026-05-14T11:48:00Z",
-  },
-  {
-    id: "FND-1039",
-    customer: "Sipho Dlamini",
-    items: [
-      { productId: "court-cap", name: "Court Cap", size: "One Size", qty: 1, price: 380 },
-      { productId: "studio-tote", name: "Studio Tote", size: "One Size", qty: 1, price: 540 },
-    ],
-    total: 995,
-    status: "paid",
-    date: "2026-05-13T19:21:00Z",
-  },
-  {
-    id: "FND-1038",
-    customer: "Megan Pillay",
-    items: [{ productId: "watch-beanie", name: "Watch Beanie", size: "One Size", qty: 2, price: 290 }],
-    total: 655,
-    status: "refunded",
-    date: "2026-05-12T08:55:00Z",
-  },
-  {
-    id: "FND-1037",
-    customer: "Kabelo Mokoena",
-    items: [{ productId: "cargo-shorts", name: "Cargo Shorts", size: "32", qty: 1, price: 890 }],
-    total: 965,
-    status: "cancelled",
-    date: "2026-05-11T14:10:00Z",
-  },
-];
+function mapOrder(row: OrderRow): Order {
+  return {
+    id: row.order_number,
+    customer: row.customer_name,
+    items: (row.items ?? []).map((i) => ({
+      productId: i.product_slug,
+      name: i.name,
+      size: i.size,
+      qty: i.qty,
+      price: i.price_cents / 100,
+    })),
+    total: row.total_cents / 100,
+    status: row.status,
+    date: row.created_at,
+  };
+}
+
+// =========================================================================
+// Hooks
+// =========================================================================
+
+/** All orders for the current tenant, newest first. */
+export function useOrders() {
+  const tenantId = useTenantId();
+  return useQuery({
+    queryKey: ["orders", tenantId],
+    enabled: !!tenantId,
+    queryFn: async (): Promise<Order[]> => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("tenant_id", tenantId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data as OrderRow[]).map(mapOrder);
+    },
+  });
+}
+
+// =========================================================================
+// Mutations
+// =========================================================================
+
+export type CreateOrderInput = {
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  shippingAddress: ShippingAddressJson;
+  items: { productSlug: string; name: string; size: string; qty: number; price: number }[];
+  subtotal: number;
+  shipping: number;
+  vat: number;
+  total: number;
+};
+
+/**
+ * Insert a new order. The order_number is computed on the client as
+ * "FND-" + (1042 + existing count). Good enough for v1; switch to a
+ * Postgres sequence when concurrency matters.
+ */
+export function useCreateOrder() {
+  const tenantId = useTenantId();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreateOrderInput): Promise<Order> => {
+      if (!tenantId) throw new Error("No tenant resolved");
+
+      // Compute order_number from current count.
+      const { count, error: countError } = await supabase
+        .from("orders")
+        .select("*", { count: "exact", head: true })
+        .eq("tenant_id", tenantId);
+      if (countError) throw countError;
+      const orderNumber = `FND-${1042 + (count ?? 0)}`;
+
+      const items: OrderItemJson[] = input.items.map((i) => ({
+        product_slug: i.productSlug,
+        name: i.name,
+        size: i.size,
+        qty: i.qty,
+        price_cents: Math.round(i.price * 100),
+      }));
+
+      const { data, error } = await supabase
+        .from("orders")
+        .insert({
+          tenant_id: tenantId,
+          order_number: orderNumber,
+          customer_name: input.customerName,
+          customer_email: input.customerEmail,
+          customer_phone: input.customerPhone ?? null,
+          shipping_address: input.shippingAddress,
+          items,
+          subtotal_cents: Math.round(input.subtotal * 100),
+          shipping_cents: Math.round(input.shipping * 100),
+          vat_cents: Math.round(input.vat * 100),
+          total_cents: Math.round(input.total * 100),
+          status: "pending",
+        })
+        .select("*")
+        .single();
+      if (error) throw error;
+      return mapOrder(data as OrderRow);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders", tenantId] });
+    },
+  });
+}

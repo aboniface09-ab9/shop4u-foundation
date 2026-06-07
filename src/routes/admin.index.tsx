@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TrendingUp, ShoppingBag, Package, AlertTriangle } from "lucide-react";
-import { orders } from "@/data/orders";
-import { products } from "@/data/products";
+import { useOrders } from "@/data/orders";
+import { useProducts } from "@/data/products";
 import { formatZAR, formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 
@@ -10,7 +10,11 @@ export const Route = createFileRoute("/admin/")({
 });
 
 function Dashboard() {
-  const revenue = orders.filter((o) => o.status === "paid" || o.status === "fulfilled").reduce((a, o) => a + o.total, 0);
+  const { data: orders = [] } = useOrders();
+  const { data: products = [] } = useProducts();
+  const revenue = orders
+    .filter((o) => o.status === "paid" || o.status === "fulfilled")
+    .reduce((a, o) => a + o.total, 0);
   const lowStock = products.filter((p) => p.stock < 10);
 
   return (
