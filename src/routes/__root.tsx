@@ -18,6 +18,7 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { DevPanel } from "@/components/DevPanel";
 import { applyTheme, useThemeStore } from "@/store/theme";
 import { useTenantBootstrap } from "@/store/tenant";
+import { useAuthBootstrap } from "@/store/auth";
 
 function NotFoundComponent() {
   return (
@@ -105,8 +106,12 @@ function AppShell() {
   const { pathname } = useLocation();
   const isAdmin = pathname.startsWith("/admin");
 
-  // Bootstrap the current tenant by VITE_TENANT_SLUG on app load.
-  // Hydrates store name, logo mark, and initial theme preset from the row.
+  // Hydrate auth state from existing session, subscribe to changes.
+  useAuthBootstrap();
+
+  // Bootstrap the current tenant. Resolves from the logged-in user's
+  // tenant_users link if available, otherwise falls back to the env-var
+  // slug (anonymous storefront browsing).
   useTenantBootstrap();
 
   // Re-apply theme tokens whenever the preset changes (theme can be

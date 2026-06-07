@@ -9,14 +9,17 @@ import {
   type ThemePreset,
 } from "@/lib/supabase";
 import { useThemeStore } from "@/store/theme";
+import { useAuthStore } from "@/store/auth";
 
 /**
  * Tenant store — holds the resolved tenant for the current request.
  * Loaded once on app boot by useTenantBootstrap() in __root.tsx.
  *
- * Until multi-tenant hostname routing lands, this resolves to a single
- * tenant via VITE_TENANT_SLUG. The store is intentionally simple — most
- * of the work happens in the bootstrap hook.
+ * Resolution strategy:
+ *   1. If a user is signed in, look up their tenant via tenant_users
+ *      (a user belongs to one or more tenants; pick the first for now).
+ *   2. Otherwise (anonymous storefront browser), fall back to the
+ *      VITE_TENANT_SLUG env var. Replaced by hostname routing later.
  */
 type TenantState = {
   tenant: TenantRow | null;
@@ -29,14 +32,34 @@ export const useTenantStore = create<TenantState>((set) => ({
 }));
 
 /**
- * Fetch the current tenant by slug. Cached forever by React Query
- * (tenant rows change rarely; we'll invalidate explicitly when the
- * merchant edits their store name or theme).
+ * Fetch the tenant for the current viewer.
+ *
+ * If `userId` is provided, joins through tenant_users to find which
+ * tenant they belong to. Otherwise looks up by slug.
  */
 export function useTenantQuery() {
+  const userId = useAuthStore((s) => s.user?.id);
+
   return useQuery({
-    queryKey: ["tenant", CURRENT_TENANT_SLUG],
+    queryKey: ["tenant", userId ?? `slug:${CURRENT_TENANT_SLUG}`],
     queryFn: async (): Promise<TenantRow> => {
+      // Authenticated branch: resolve via tenant_users link.
+      if (userId) {
+        const { data, error } = await supabase
+          .from("tenant_users")
+          .select("tenant:tenants(*)")
+          .eq("auth_user_id", userId)
+          .limit(1)
+          .single();
+        if (error) throw error;
+        const tenant = (data as { tenant: TenantRow | null })?.tenant;
+        if (!tenant) {
+          throw new Error("User is not linked to any tenant. Contact platform admin.");
+        }
+        return tenant;
+      }
+
+      // Anonymous branch: resolve by slug (storefront).
       const { data, error } = await supabase
         .from("tenants")
         .select("*")
@@ -45,20 +68,18 @@ export function useTenantQuery() {
       if (error) throw error;
       return data as TenantRow;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
 /**
- * Call this once at app boot (in __root.tsx). It:
- *   1. Loads the tenant by slug.
+ * Call this once at app boot (from __root.tsx). It:
+ *   1. Loads the tenant (via user link if signed in, else by slug).
  *   2. Hydrates the theme store with the tenant's preset, store name, and logo mark.
- *   3. Mirrors the tenant into useTenantStore for components that need
- *      direct access to tenant.id or tenant.plan (e.g. admin chrome).
+ *   3. Mirrors the tenant into useTenantStore for direct access.
  *
- * The existing theme picker (DevPanel, /admin/theme) still works on top —
- * users can switch themes locally, the change persists via the existing
- * persist middleware. Tenant-row theme is the *initial* value, not a lock.
+ * Re-runs when the user signs in / out so the admin view picks up the
+ * right tenant immediately.
  */
 export function useTenantBootstrap() {
   const { data: tenant, isLoading, error } = useTenantQuery();
@@ -81,6 +102,6 @@ export function useTenantBootstrap() {
   return { tenant, isLoading, error };
 }
 
-/** Convenience selector. */
+/** Convenience selectors. */
 export const useTenant = () => useTenantStore((s) => s.tenant);
 export const useTenantId = () => useTenantStore((s) => s.tenant?.id ?? null);

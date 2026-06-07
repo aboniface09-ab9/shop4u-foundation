@@ -17,7 +17,11 @@ if (!url || !anonKey) {
 }
 
 export const supabase = createClient(url, anonKey, {
-  auth: { persistSession: false }, // no merchant auth yet — iteration 4
+  auth: {
+    persistSession: true,        // merchant logins survive page refresh
+    autoRefreshToken: true,      // refresh JWTs automatically before expiry
+    detectSessionInUrl: false,   // we don't use OAuth redirects yet
+  },
 });
 
 /**
