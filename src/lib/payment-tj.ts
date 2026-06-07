@@ -5,104 +5,70 @@ import type {
 } from "./payment";
 
 /**
- * Transaction Junction (TJ) hosted payment page provider — STUB.
+ * Transaction Junction (TJ) hosted payment page provider — CLIENT WRAPPER.
  *
- * This file is the contract between the app and TJ's gateway. All
- * TJ-specific concerns (endpoint URL, auth scheme, request shape,
- * webhook signature verification) live here and ONLY here.
+ * ⚠️  ARCHITECTURE NOTE
  *
- * ⚠️  IMPORTANT — DO NOT ENABLE WITHOUT:
- *     1. Confirmed TJ sandbox credentials in your `.env.local`
- *        (see TODO markers below).
- *     2. A security/compliance review of this integration.
- *     3. A signed integration agreement with TJ if required.
+ * The actual TJ API integration is server-side only — see
+ *   src/server/tj/oauth.ts
+ *   src/server/tj/api.ts
+ *   src/server/tj/types.ts
  *
- * The implementation below intentionally throws on every call until
- * the TODO blocks are filled in with TJ's actual integration spec.
+ * That code lives on the server because the OAuth client_secret must
+ * never touch the browser bundle. This file is the THIN CLIENT-SIDE
+ * SHIM that just calls our own server endpoint, which in turn calls TJ.
  *
- * To activate once ready: set VITE_PAYMENT_PROVIDER=tj in .env.local
- * (and the TJ-specific env vars).
+ * Flow:
+ *   browser → fetch('/api/payment/create-session', {...})
+ *           → server route reads TJ creds from Worker env
+ *           → server calls TJ OAuth + Create Session
+ *           → server returns { redirectUrl, sessionReference } to browser
+ *           → browser redirects to redirectUrl
+ *
+ * The server route at /api/payment/create-session is the next thing
+ * to be built — currently a TODO. It belongs in:
+ *   src/routes/api/payment/create-session.ts (TanStack Start server route)
+ *
+ * Prerequisites before enabling this provider (set
+ * VITE_PAYMENT_PROVIDER=tj):
+ *   1. Merchant onboarding complete with TJ — you have merchantId,
+ *      profileId, and a webhook URL configured.
+ *   2. The four server-side env vars set in Cloudflare Worker env
+ *      (NOT VITE_ prefixed):
+ *        TJ_OAUTH_URL, TJ_API_BASE_URL, TJ_CLIENT_ID, TJ_CLIENT_SECRET,
+ *        TJ_MERCHANT_ID, TJ_PROFILE_ID
+ *   3. The /api/payment/create-session route built (server-side).
+ *   4. The /api/payment/webhook route built (server-side; uses TJ's
+ *      getTransaction for authoritative verification — see notes in
+ *      src/server/tj/api.ts).
+ *   5. Security review of the implementation.
+ *
+ * Until those are done, this provider is not activated (the default
+ * provider is the mock — see src/lib/payment.ts).
  */
-
-// =========================================================================
-// Env vars — names are placeholders; replace with whatever TJ requires.
-// =========================================================================
-const TJ_BASE_URL = import.meta.env.VITE_TJ_BASE_URL;       // e.g. "https://sandbox.tj.example/api"
-const TJ_MERCHANT_ID = import.meta.env.VITE_TJ_MERCHANT_ID; // your merchant identifier
-const TJ_API_KEY = import.meta.env.VITE_TJ_API_KEY;         // or whatever auth scheme TJ uses
-
 export const tjProvider: PaymentProvider = {
   name: "Transaction Junction (TJ)",
 
   async createCheckoutSession(input: CreateSessionInput): Promise<CheckoutSession> {
-    if (!TJ_BASE_URL || !TJ_MERCHANT_ID || !TJ_API_KEY) {
-      throw new Error(
-        "TJ provider not configured. Set VITE_TJ_BASE_URL, VITE_TJ_MERCHANT_ID, VITE_TJ_API_KEY in .env.local — and confirm with TJ docs whether all three are correct.",
-      );
+    const res = await fetch("/api/payment/create-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        orderReference: input.orderReference,
+        amountCents: input.amountCents,
+        currency: input.currency,
+        customerEmail: input.customerEmail,
+        customerName: input.customerName,
+        returnUrl: input.returnUrl,
+        cancelUrl: input.cancelUrl,
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Couldn't start payment: ${res.status} ${text}`);
     }
 
-    // ====================================================================
-    // TODO — TJ integration team:
-    //
-    // 1. Replace the URL, request body shape, headers, and auth scheme
-    //    below with whatever TJ's hosted-page API actually expects.
-    //    The fields used here (orderReference, amountCents, currency,
-    //    customer email/name, returnUrl, cancelUrl) are the standard
-    //    inputs every gateway needs — map them onto TJ's parameter names.
-    //
-    // 2. If TJ requires HMAC signing of the request body, do it here.
-    //    The signing secret should be a separate env var (e.g.
-    //    VITE_TJ_SIGNING_SECRET) — but if signing must use a server-only
-    //    secret, this whole function needs to move behind a server
-    //    function and the secret stays in Workers env (not VITE_).
-    //
-    // 3. Parse TJ's response and return the redirectUrl + sessionReference.
-    //
-    // 4. The webhook receiver lives in src/routes/api.payment-webhook.ts
-    //    (to be created when this is wired up). It validates TJ's
-    //    signature on the callback and updates the matching order row
-    //    in Supabase.
-    // ====================================================================
-
-    throw new Error(
-      "TJ provider is a stub. Implement createCheckoutSession() against TJ's actual API before enabling.",
-    );
-
-    // Reference implementation skeleton, left commented for guidance:
-    //
-    // const body = {
-    //   merchantId: TJ_MERCHANT_ID,
-    //   reference: input.orderReference,
-    //   amount: input.amountCents,
-    //   currency: input.currency,
-    //   customer: {
-    //     email: input.customerEmail,
-    //     name: input.customerName,
-    //   },
-    //   urls: {
-    //     return: input.returnUrl,
-    //     cancel: input.cancelUrl,
-    //     // webhook: maybe configured at merchant level rather than per-request
-    //   },
-    // };
-    //
-    // const res = await fetch(`${TJ_BASE_URL}/checkout/sessions`, {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //     Authorization: `Bearer ${TJ_API_KEY}`,
-    //   },
-    //   body: JSON.stringify(body),
-    // });
-    //
-    // if (!res.ok) {
-    //   throw new Error(`TJ session create failed: ${res.status} ${await res.text()}`);
-    // }
-    //
-    // const data = await res.json();
-    // return {
-    //   redirectUrl: data.hostedPageUrl,
-    //   sessionReference: data.sessionId,
-    // };
+    return (await res.json()) as CheckoutSession;
   },
 };
