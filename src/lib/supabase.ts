@@ -24,14 +24,6 @@ export const supabase = createClient(url, anonKey, {
   },
 });
 
-/**
- * The slug of the current tenant. Until multi-tenant hostname routing
- * lands (later iteration), the app resolves to a single tenant via this
- * env var. Set in .env.local — defaults to "foundry" for the demo brand.
- */
-export const CURRENT_TENANT_SLUG =
-  import.meta.env.VITE_TENANT_SLUG ?? "foundry";
-
 // =========================================================================
 // DB row types — mirror the Postgres schema exactly. App-level types
 // (Product, Order) live in src/data/* and are mapped from these.
@@ -45,6 +37,16 @@ export type TenantTheme = {
   colors?: Record<string, string>;
   fonts?: Record<string, string>;
   radius?: Record<string, number>;
+};
+
+export type TenantContent = {
+  hero_eyebrow?: string;
+  hero_headline?: string;
+  hero_description?: string;
+  hero_cta_primary?: string;
+  hero_cta_secondary?: string;
+  studio_headline?: string;
+  studio_body?: string;
 };
 
 export type TenantRow = {
@@ -65,6 +67,7 @@ export type TenantRow = {
     | "cancelled";
   trial_ends_at: string | null;
   theme: TenantTheme;
+  content: TenantContent;
   created_at: string;
   updated_at: string;
 };

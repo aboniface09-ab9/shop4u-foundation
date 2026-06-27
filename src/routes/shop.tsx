@@ -1,13 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { useProducts, type ProductCategory } from "@/data/products";
+import { useProducts } from "@/data/products";
 import { ProductCard } from "@/components/ProductCard";
 
 export const Route = createFileRoute("/shop")({
   component: Shop,
 });
 
-const CATEGORIES: (ProductCategory | "All")[] = ["All", "Tops", "Bottoms", "Headwear", "Accessories"];
 const SORTS = [
   { id: "featured", label: "Featured" },
   { id: "low", label: "Price ↑" },
@@ -15,9 +14,16 @@ const SORTS = [
 ] as const;
 
 function Shop() {
-  const [cat, setCat] = useState<(ProductCategory | "All")>("All");
+  const [cat, setCat] = useState("All");
   const [sort, setSort] = useState<typeof SORTS[number]["id"]>("featured");
   const { data: products = [], isLoading } = useProducts();
+
+  // Derive unique categories from loaded products so the filter stays in sync
+  const categories = useMemo(() => {
+    const seen = new Set<string>();
+    products.forEach((p) => { if (p.category) seen.add(p.category); });
+    return ["All", ...Array.from(seen).sort()];
+  }, [products]);
 
   const list = useMemo(() => {
     let l = products.filter((p) => cat === "All" || p.category === cat);
@@ -35,7 +41,7 @@ function Shop() {
 
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-4 border-b border-border">
         <div className="flex flex-wrap gap-1">
-          {CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <button
               key={c}
               onClick={() => setCat(c)}

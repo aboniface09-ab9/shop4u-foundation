@@ -1,7 +1,15 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tanstack-start-app",
+  "name": "youcommerce",
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
+  // Route all subdomain and apex traffic to this worker.
+  // Prerequisite: wildcard CNAME in Cloudflare DNS:
+  //   *.youcommerce.co.za  CNAME  youcommerce.co.za  (proxied)
+  //   youcommerce.co.za    A      192.0.2.1           (proxied, Workers route takes over)
+  "routes": [
+    { "pattern": "youcommerce.co.za/app/*", "zone_name": "youcommerce.co.za" },
+    { "pattern": "*.youcommerce.co.za/*", "zone_name": "youcommerce.co.za" }
+  ]
 }

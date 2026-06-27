@@ -70,6 +70,7 @@ function ProductPage() {
               name={product.name}
               category={product.category}
               color={product.imageColor}
+              imageUrl={product.imageUrl}
               size="lg"
             />
           </div>

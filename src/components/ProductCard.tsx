@@ -16,6 +16,7 @@ export function ProductCard({ product }: { product: Product }) {
             name={product.name}
             category={product.category}
             color={product.imageColor}
+            imageUrl={product.imageUrl}
             size="md"
           />
         </div>

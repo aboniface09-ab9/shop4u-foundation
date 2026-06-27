@@ -19,6 +19,7 @@ import { DevPanel } from "@/components/DevPanel";
 import { applyTheme, useThemeStore } from "@/store/theme";
 import { useTenantBootstrap } from "@/store/tenant";
 import { useAuthBootstrap } from "@/store/auth";
+import { getTenantSlugFromHost } from "@/lib/tenant-slug";
 
 function NotFoundComponent() {
   return (
@@ -57,12 +58,24 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  /**
+   * Root loader — runs server-side on every SSR request.
+   * Extracts the tenant slug from the Host header so that every child
+   * route and component knows which merchant's storefront to render,
+   * without needing a compile-time env var.
+   */
+  loader: async () => {
+    const tenantSlug = await getTenantSlugFromHost();
+    return { tenantSlug };
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Foundry — Small-batch streetwear, Cape Town" },
-      { name: "description", content: "Heavyweight basics and outerwear, cut and sewn in Salt River. Powered by Shop4U." },
+      // Per-merchant title is set client-side by useTenantBootstrap once
+      // the tenant record is loaded. This is the SSR fallback.
+      { title: "YouCommerce" },
+      { name: "description", content: "Your shop. Your brand. Live in an hour." },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
@@ -102,6 +115,7 @@ function RootComponent() {
  * be in the tree above them.
  */
 function AppShell() {
+  const { tenantSlug } = Route.useLoaderData();
   const { theme, layout } = useThemeStore();
   const { pathname } = useLocation();
   const isAdmin = pathname.startsWith("/admin");
@@ -109,10 +123,9 @@ function AppShell() {
   // Hydrate auth state from existing session, subscribe to changes.
   useAuthBootstrap();
 
-  // Bootstrap the current tenant. Resolves from the logged-in user's
-  // tenant_users link if available, otherwise falls back to the env-var
-  // slug (anonymous storefront browsing).
-  useTenantBootstrap();
+  // Bootstrap the current tenant. Slug resolved server-side from the
+  // Host header — no env var needed at runtime.
+  useTenantBootstrap(tenantSlug);
 
   // Re-apply theme tokens whenever the preset changes (theme can be
   // changed locally via DevPanel / theme editor even after bootstrap).

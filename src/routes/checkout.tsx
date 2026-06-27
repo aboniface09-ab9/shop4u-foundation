@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { useCart, SHIPPING_FLAT, VAT_RATE } from "@/store/cart";
 import { useCreateOrder } from "@/data/orders";
-import { getProvider } from "@/lib/payment";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,7 +48,7 @@ function Checkout() {
     const postal = String(form.get("postal") ?? "");
 
     try {
-      // 1. Create the pending order in Supabase.
+      // 1. Create the pending order in Supabase so we have a record.
       const order = await createOrder.mutateAsync({
         customerName: `${firstName} ${lastName}`.trim(),
         customerEmail: email,
@@ -67,25 +67,25 @@ function Checkout() {
         total,
       });
 
-      // 2. Ask the active payment provider for a hosted-page session.
-      const provider = getProvider();
-      const origin = window.location.origin;
-      const session = await provider.createCheckoutSession({
-        orderReference: order.id, // order_number, e.g. "FND-1043"
-        amountCents: Math.round(total * 100),
-        currency: "ZAR",
-        customerEmail: email,
-        customerName: `${firstName} ${lastName}`.trim(),
-        returnUrl: `${origin}/order/${order.id}`,
-        cancelUrl: `${origin}/checkout?cancelled=${order.id}`,
+      // 2. Build a pre-filled WhatsApp message and open it.
+      //    Payment gateway integration replaces this step once it's ready.
+      const waUrl = buildWhatsAppUrl({
+        orderRef: order.id,
+        items: items.map((i) => ({ name: i.name, size: i.size, qty: i.qty, price: i.price })),
+        customer: {
+          name: `${firstName} ${lastName}`.trim(),
+          email,
+          phone: mobile,
+        },
+        shipping: { line1: address, suburb, city, postal, province },
       });
 
-      // 3. Clear the cart locally and redirect to the gateway.
+      // 3. Clear cart, then open WhatsApp in a new tab.
       clear();
-      window.location.href = session.redirectUrl;
+      window.open(waUrl, "_blank", "noopener,noreferrer");
     } catch (err) {
       setBusy(false);
-      toast.error("Couldn't start payment", {
+      toast.error("Something went wrong", {
         description: err instanceof Error ? err.message : "Please try again.",
       });
     }
@@ -137,12 +137,12 @@ function Checkout() {
           </Section>
 
           <Button type="submit" size="lg" className="w-full" disabled={busy}>
-            {busy ? "Redirecting to payment…" : "Continue to payment"}
+            {busy ? "Opening WhatsApp…" : "Place order via WhatsApp"}
           </Button>
 
           <p className="text-[11px] text-muted text-center">
-            You&apos;ll be redirected to our payment provider&apos;s secure page.
-            We never see your card details.
+            We&apos;ll open WhatsApp with your full order summary. One of the team
+            will confirm availability and arrange payment with you directly.
           </p>
         </div>
 

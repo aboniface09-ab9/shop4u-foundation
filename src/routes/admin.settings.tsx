@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Plus, Trash2, Loader2 } from "lucide-react";
+import { useCategories, useCreateCategory, useDeleteCategory } from "@/data/categories";
 
 export const Route = createFileRoute("/admin/settings")({
   component: Settings,
@@ -86,8 +88,75 @@ function Settings() {
         </ul>
       </Card>
 
+      <CategoriesCard />
+
       <Button onClick={() => toast.success("Settings saved")}>Save settings</Button>
     </div>
+  );
+}
+
+function CategoriesCard() {
+  const { data: categories = [], isLoading } = useCategories();
+  const createCategory = useCreateCategory();
+  const deleteCategory = useDeleteCategory();
+  const [newName, setNewName] = useState("");
+
+  const add = async () => {
+    const name = newName.trim();
+    if (!name) return;
+    try {
+      await createCategory.mutateAsync(name);
+      setNewName("");
+    } catch (err) {
+      toast.error("Failed to add category", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  };
+
+  return (
+    <Card title="Product categories">
+      <div className="space-y-3">
+        {isLoading && (
+          <div className="flex items-center gap-2 text-sm text-muted">
+            <Loader2 size={13} className="animate-spin" /> Loading…
+          </div>
+        )}
+        <ul className="divide-y divide-border">
+          {categories.map((c) => (
+            <li key={c.id} className="flex items-center justify-between py-2.5">
+              <span className="text-sm">{c.name}</span>
+              <button
+                type="button"
+                onClick={() => deleteCategory.mutate(c.id)}
+                disabled={deleteCategory.isPending}
+                className="p-1 rounded text-muted hover:text-danger transition-colors disabled:opacity-40"
+                aria-label={`Remove ${c.name}`}
+              >
+                <Trash2 size={14} />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="flex gap-2 pt-1">
+          <Input
+            placeholder="New category name"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), add())}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={add}
+            disabled={createCategory.isPending || !newName.trim()}
+          >
+            {createCategory.isPending ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+          </Button>
+        </div>
+        <p className="text-xs text-muted">Categories are shared across all your products.</p>
+      </div>
+    </Card>
   );
 }
 

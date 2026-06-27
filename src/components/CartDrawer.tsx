@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/cart";
 import { ProductImage } from "./ProductImage";
 import { formatZAR } from "@/lib/format";
+import { buildQuickCartUrl } from "@/lib/whatsapp";
 
 export function CartDrawer() {
   const { items, isOpen, close, setQty, remove, subtotal } = useCart();
@@ -88,9 +89,22 @@ export function CartDrawer() {
               <span className="font-mono font-semibold">{formatZAR(subtotal())}</span>
             </div>
             <p className="text-xs text-muted">Shipping and VAT calculated at checkout.</p>
+            {/* Primary CTA — full checkout form, saves order to Supabase */}
             <Button asChild className="w-full" size="lg" onClick={close}>
-              <Link to="/checkout">Checkout</Link>
+              <Link to="/checkout">Place order via WhatsApp</Link>
             </Button>
+            {/* Quick shortcut — skips the form, sends basket items directly */}
+            <button
+              className="w-full text-center font-mono text-[11px] uppercase tracking-[0.18em] text-muted hover:text-primary transition-colors"
+              onClick={() => {
+                const url = buildQuickCartUrl(
+                  items.map((i) => ({ name: i.name, size: i.size, qty: i.qty, price: i.price })),
+                );
+                window.open(url, "_blank", "noopener,noreferrer");
+              }}
+            >
+              Quick enquiry on WhatsApp
+            </button>
           </div>
         )}
       </SheetContent>

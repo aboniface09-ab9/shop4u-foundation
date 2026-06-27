@@ -2,28 +2,51 @@ import { useThemeStore } from "@/store/theme";
 import { cn } from "@/lib/utils";
 
 /**
- * ProductImage — a CSS-gradient placeholder that doubles as branding.
+ * ProductImage — renders a real photo if `imageUrl` is supplied, otherwise
+ * falls back to the CSS-gradient placeholder that doubles as branding.
  *
- * Uses `product.imageColor` as the seed for a vertical gradient, then
- * overlays the store wordmark + category top-left and the product name
- * set huge bottom-left. Same treatment scales from cart thumb to PDP hero.
+ * The gradient uses `color` as the seed, overlays the store wordmark +
+ * category top-left, and the product name set large bottom-left.
+ * Same treatment scales from cart thumb to PDP hero.
  */
 export function ProductImage({
   name,
   category,
   color,
+  imageUrl,
   className,
   size = "md",
 }: {
   name: string;
   category: string;
   color: string;
+  imageUrl?: string | null;
   className?: string;
   size?: "sm" | "md" | "lg";
 }) {
   const logoMark = useThemeStore((s) => s.logoMark);
 
-  // Build a soft tonal gradient from the seed colour to a darker variant.
+  // Real photo — skip the gradient entirely
+  if (imageUrl) {
+    return (
+      <div
+        aria-hidden
+        className={cn(
+          "relative w-full h-full overflow-hidden rounded-md bg-surface",
+          className,
+        )}
+      >
+        <img
+          src={imageUrl}
+          alt={name}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
+  // Gradient placeholder — build a soft tonal gradient from the seed colour.
   const gradient = `linear-gradient(160deg, ${color} 0%, ${shade(color, -22)} 100%)`;
   const textOn = isLight(color) ? "rgba(20,20,20,0.92)" : "rgba(255,255,255,0.95)";
   const subOn = isLight(color) ? "rgba(20,20,20,0.55)" : "rgba(255,255,255,0.65)";

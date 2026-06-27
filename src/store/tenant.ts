@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { create } from "zustand";
 
 import {
-  CURRENT_TENANT_SLUG,
   supabase,
   type TenantRow,
   type ThemePreset,
@@ -18,8 +17,9 @@ import { useAuthStore } from "@/store/auth";
  * Resolution strategy:
  *   1. If a user is signed in, look up their tenant via tenant_users
  *      (a user belongs to one or more tenants; pick the first for now).
- *   2. Otherwise (anonymous storefront browser), fall back to the
- *      VITE_TENANT_SLUG env var. Replaced by hostname routing later.
+ *   2. Otherwise (anonymous storefront visitor), use the slug resolved
+ *      from the request's Host header by getTenantSlugFromHost() and
+ *      passed down via the root route loader.
  */
 type TenantState = {
   tenant: TenantRow | null;
@@ -34,14 +34,15 @@ export const useTenantStore = create<TenantState>((set) => ({
 /**
  * Fetch the tenant for the current viewer.
  *
- * If `userId` is provided, joins through tenant_users to find which
- * tenant they belong to. Otherwise looks up by slug.
+ * `slug` is the runtime-resolved tenant slug from the root route loader
+ * (extracted from the request's Host header by getTenantSlugFromHost).
+ * If a user is signed in their tenant is resolved via tenant_users instead.
  */
-export function useTenantQuery() {
+export function useTenantQuery(slug: string) {
   const userId = useAuthStore((s) => s.user?.id);
 
   return useQuery({
-    queryKey: ["tenant", userId ?? `slug:${CURRENT_TENANT_SLUG}`],
+    queryKey: ["tenant", userId ?? `slug:${slug}`],
     queryFn: async (): Promise<TenantRow> => {
       // Authenticated branch: resolve via tenant_users link.
       if (userId) {
@@ -59,11 +60,11 @@ export function useTenantQuery() {
         return tenant;
       }
 
-      // Anonymous branch: resolve by slug (storefront).
+      // Anonymous branch: resolve by runtime slug (from Host header).
       const { data, error } = await supabase
         .from("tenants")
         .select("*")
-        .eq("slug", CURRENT_TENANT_SLUG)
+        .eq("slug", slug)
         .single();
       if (error) throw error;
       return data as TenantRow;
@@ -74,15 +75,15 @@ export function useTenantQuery() {
 
 /**
  * Call this once at app boot (from __root.tsx). It:
- *   1. Loads the tenant (via user link if signed in, else by slug).
+ *   1. Loads the tenant (via user link if signed in, else by hostname slug).
  *   2. Hydrates the theme store with the tenant's preset, store name, and logo mark.
  *   3. Mirrors the tenant into useTenantStore for direct access.
  *
- * Re-runs when the user signs in / out so the admin view picks up the
- * right tenant immediately.
+ * `slug` comes from the root route loader which resolves it server-side
+ * from the request's Host header. Re-runs when the user signs in / out.
  */
-export function useTenantBootstrap() {
-  const { data: tenant, isLoading, error } = useTenantQuery();
+export function useTenantBootstrap(slug: string) {
+  const { data: tenant, isLoading, error } = useTenantQuery(slug);
   const setTenant = useTenantStore((s) => s.setTenant);
   const setStoreName = useThemeStore((s) => s.setStoreName);
   const setLogoMark = useThemeStore((s) => s.setLogoMark);
