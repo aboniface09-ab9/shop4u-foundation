@@ -11,5 +11,11 @@
   "routes": [
     { "pattern": "youcommerce.co.za/app/*", "zone_name": "youcommerce.co.za" },
     { "pattern": "*.youcommerce.co.za/*", "zone_name": "youcommerce.co.za" }
-  ]
+  ],
+  // Daily billing cron — 04:00 UTC = 06:00 SAST (SAST is UTC+2), matching
+  // billing-schema.sql's own documented "checks every day at 06:00 SAST".
+  // Handled by the `scheduled` export in src/server.ts.
+  "triggers": {
+    "crons": ["0 4 * * *"]
+  }
 }

@@ -82,12 +82,16 @@ function OrderStatus() {
         <div className="border-t border-border pt-3 space-y-2 text-sm">
           <Row label="Subtotal" value={formatZAR(order.subtotal_cents / 100)} />
           <Row label="Shipping" value={formatZAR(order.shipping_cents / 100)} />
-          <Row label="VAT" value={formatZAR(order.vat_cents / 100)} />
         </div>
         <div className="border-t border-border pt-3 flex justify-between font-mono font-semibold">
           <span>Total</span>
           <span>{formatZAR(order.total_cents / 100)}</span>
         </div>
+        {order.vat_cents > 0 && (
+          <p className="text-[11px] text-muted">
+            Includes VAT (15%): {formatZAR(order.vat_cents / 100)}
+          </p>
+        )}
       </div>
 
       <div className="mt-6 text-sm text-muted">

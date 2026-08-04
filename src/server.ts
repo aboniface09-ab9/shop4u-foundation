@@ -2,10 +2,67 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import {
+  handleCheckoutFields,
+  handleChargeSubscription,
+  handleNotify,
+  handleSubscriptionCheckoutFields,
+  handleSubscriptionNotify,
+  handleSubscriptionsDue,
+  type PayfastWorkerEnv,
+} from "./server/payfast/handlers";
+import { runDailyBillingCron, type BillingCronEnv } from "./server/billing/cron";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
+
+/**
+ * Payment provider routes handled directly at the Worker level, ahead of
+ * the TanStack Start SSR handler.
+ *
+ * Why here and not a file-based API route under src/routes/api/: this
+ * repo's installed @tanstack/react-start (1.167.50) has no "./api"
+ * subpath export — createAPIFileRoute doesn't exist in this version
+ * (confirmed by checking its package.json exports map). Rather than
+ * guess at an uncertain alternative, these two routes are intercepted
+ * here, which also gives direct access to real Cloudflare Worker env
+ * bindings (the `env` argument below) instead of relying on
+ * `process.env`. See payfast-integration-brief.md and
+ * src/server/payfast/handlers.ts for the actual logic.
+ *
+ * If a future TanStack Start upgrade adds a real file-based API route
+ * mechanism, this is the natural thing to migrate — check that
+ * version's exports map first.
+ */
+async function tryHandlePaymentRoute(
+  request: Request,
+  env: PayfastWorkerEnv,
+): Promise<Response | undefined> {
+  const { pathname } = new URL(request.url);
+
+  if (request.method === "GET" && pathname === "/api/platform/subscriptions-due") {
+    return handleSubscriptionsDue(request, env);
+  }
+
+  if (request.method !== "POST") return undefined;
+  if (pathname === "/api/payment/payfast/checkout-fields") {
+    return handleCheckoutFields(request, env);
+  }
+  if (pathname === "/api/payment/payfast/notify") {
+    return handleNotify(request, env);
+  }
+  if (pathname === "/api/payment/payfast/subscription-checkout-fields") {
+    return handleSubscriptionCheckoutFields(request, env);
+  }
+  if (pathname === "/api/payment/payfast/subscription-notify") {
+    return handleSubscriptionNotify(request, env);
+  }
+  if (pathname === "/api/platform/charge-subscription") {
+    return handleChargeSubscription(request, env);
+  }
+  return undefined;
+}
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
@@ -69,6 +126,12 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const paymentResponse = await tryHandlePaymentRoute(
+        request,
+        (env ?? {}) as PayfastWorkerEnv,
+      );
+      if (paymentResponse) return paymentResponse;
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
@@ -76,5 +139,15 @@ export default {
       console.error(error);
       return brandedErrorResponse();
     }
+  },
+
+  // Daily billing cron — see wrangler.jsonc's "triggers.crons" and
+  // src/server/billing/cron.ts for what this actually does.
+  async scheduled(_event: unknown, env: unknown, ctx: { waitUntil: (p: Promise<unknown>) => void }) {
+    ctx.waitUntil(
+      runDailyBillingCron((env ?? {}) as BillingCronEnv).catch((error) => {
+        console.error("Billing cron failed", error);
+      }),
+    );
   },
 };

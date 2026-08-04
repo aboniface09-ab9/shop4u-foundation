@@ -2,9 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { useCart, SHIPPING_FLAT, VAT_RATE } from "@/store/cart";
+import { useCart, SHIPPING_FLAT, calcOrderTotals } from "@/store/cart";
+import { useTenant } from "@/store/tenant";
 import { useCreateOrder } from "@/data/orders";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { getProvider, redirectToCheckout } from "@/lib/payment";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,20 +26,37 @@ const PROVINCES = [
 
 function Checkout() {
   const { items, subtotal, clear } = useCart();
+  const tenant = useTenant();
+  const vatRegistered = tenant?.vat_registered ?? true;
   const sub = subtotal();
   const shipping = items.length ? SHIPPING_FLAT : 0;
-  const vat = Math.round((sub + shipping) * VAT_RATE);
-  const total = sub + shipping + vat;
+  // Listed prices are VAT-inclusive — vat is the extracted portion of the
+  // total, never an add-on. Not-VAT-registered tenants get vat = 0.
+  const { vat, total } = calcOrderTotals(sub, shipping, vatRegistered);
 
   const [province, setProvince] = useState("Western Cape");
   const [busy, setBusy] = useState(false);
   const createOrder = useCreateOrder();
 
-  const submit = async (e: React.FormEvent) => {
+  // PayFast (or whichever provider is active) — the "Pay by card" button
+  // needs BOTH: (1) a real provider active at build time
+  // (VITE_PAYMENT_PROVIDER, defaults to the mock gateway so this stays
+  // hidden everywhere until explicitly turned on), AND (2) this specific
+  // tenant opted in (tenants.payfast_enabled). That second check is what
+  // scopes the button to only the tenant(s) that actually have a
+  // tenant_payfast_config row set up — deploying the provider flag no
+  // longer lights this up on every storefront.
+  const provider = getProvider();
+  const providerIsLive = provider.name !== "Mock Gateway (dev only)" && !!tenant?.payfast_enabled;
+
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    const payByCard = submitter?.value === "card";
+
     setBusy(true);
 
-    const form = new FormData(e.currentTarget as HTMLFormElement);
+    const form = new FormData(e.currentTarget);
     const email = String(form.get("email") ?? "");
     const mobile = String(form.get("mobile") ?? "");
     const firstName = String(form.get("firstName") ?? "");
@@ -46,11 +65,12 @@ function Checkout() {
     const suburb = String(form.get("suburb") ?? "");
     const city = String(form.get("city") ?? "");
     const postal = String(form.get("postal") ?? "");
+    const customerName = `${firstName} ${lastName}`.trim();
 
     try {
       // 1. Create the pending order in Supabase so we have a record.
       const order = await createOrder.mutateAsync({
-        customerName: `${firstName} ${lastName}`.trim(),
+        customerName,
         customerEmail: email,
         customerPhone: mobile,
         shippingAddress: { line1: address, suburb, city, postal, province },
@@ -67,17 +87,34 @@ function Checkout() {
         total,
       });
 
-      // 2. Build a pre-filled WhatsApp message and open it.
-      //    Payment gateway integration replaces this step once it's ready.
+      if (payByCard) {
+        // 2a. Card path: ask the active provider for a hosted checkout
+        // session, then send the browser there. The order stays "pending"
+        // until PayFast's ITN webhook confirms payment server-side (see
+        // payfast-integration-brief.md) — /order/:ref polls for that.
+        const origin = window.location.origin;
+        const session = await provider.createCheckoutSession({
+          orderReference: order.id,
+          amountCents: Math.round(total * 100),
+          currency: "ZAR",
+          customerEmail: email,
+          customerName,
+          returnUrl: `${origin}/order/${order.id}`,
+          cancelUrl: `${origin}/checkout`,
+        });
+        clear();
+        redirectToCheckout(session);
+        return;
+      }
+
+      // 2b. WhatsApp path (unchanged): build a pre-filled message and open it.
       const waUrl = buildWhatsAppUrl({
         orderRef: order.id,
         items: items.map((i) => ({ name: i.name, size: i.size, qty: i.qty, price: i.price })),
-        customer: {
-          name: `${firstName} ${lastName}`.trim(),
-          email,
-          phone: mobile,
-        },
+        customer: { name: customerName, email, phone: mobile },
         shipping: { line1: address, suburb, city, postal, province },
+        whatsappNumber: tenant?.whatsapp_number,
+        vatRegistered,
       });
 
       // 3. Clear cart, then open WhatsApp in a new tab.
@@ -136,13 +173,35 @@ function Checkout() {
             </div>
           </Section>
 
-          <Button type="submit" size="lg" className="w-full" disabled={busy}>
+          {providerIsLive && (
+            <Button
+              type="submit"
+              name="action"
+              value="card"
+              size="lg"
+              className="w-full"
+              disabled={busy}
+            >
+              {busy ? "Redirecting to payment…" : `Pay ${formatZAR(total)} by card`}
+            </Button>
+          )}
+
+          <Button
+            type="submit"
+            name="action"
+            value="whatsapp"
+            size="lg"
+            variant={providerIsLive ? "outline" : "default"}
+            className="w-full"
+            disabled={busy}
+          >
             {busy ? "Opening WhatsApp…" : "Place order via WhatsApp"}
           </Button>
 
           <p className="text-[11px] text-muted text-center">
-            We&apos;ll open WhatsApp with your full order summary. One of the team
-            will confirm availability and arrange payment with you directly.
+            {providerIsLive
+              ? "Pay by card now, or place your order via WhatsApp and arrange payment with the team directly."
+              : "We'll open WhatsApp with your full order summary. One of the team will confirm availability and arrange payment with you directly."}
           </p>
         </div>
 
@@ -160,12 +219,14 @@ function Checkout() {
             <div className="border-t border-border pt-4 space-y-2 text-sm">
               <Row label="Subtotal" value={formatZAR(sub)} />
               <Row label="Shipping" value={formatZAR(shipping)} />
-              <Row label="VAT (15%)" value={formatZAR(vat)} />
             </div>
             <div className="border-t border-border mt-4 pt-4 flex justify-between">
               <span className="font-heading font-semibold">Total</span>
               <span className="font-mono font-semibold text-lg">{formatZAR(total)}</span>
             </div>
+            {vatRegistered && (
+              <p className="text-[11px] text-muted mt-1.5">Includes VAT (15%): {formatZAR(vat)}</p>
+            )}
           </div>
         </aside>
       </form>

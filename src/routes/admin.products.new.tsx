@@ -9,21 +9,13 @@ import { useCreateProduct } from "@/data/products";
 import { CategoryCombobox } from "@/components/CategoryCombobox";
 import { ImageUpload } from "@/components/ImageUpload";
 import { useTenantId } from "@/store/tenant";
+import { slugify } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/products/new")({
   component: NewProduct,
 });
 
 const ALL_SIZES = ["XS", "S", "M", "L", "XL", "One Size", "28", "30", "32", "34", "36"];
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
 
 function NewProduct() {
   const navigate = useNavigate();
@@ -36,7 +28,10 @@ function NewProduct() {
   const [description, setDescription] = useState("");
   const [sizes, setSizes] = useState<string[]>([]);
   const [stock, setStock] = useState("");
-  const [imageColor, setImageColor] = useState("#1A1714");
+  // Mid-tone default (not near-black or near-white) so the gradient
+  // placeholder stays visible against every theme, including the dark
+  // ones — a near-black default used to disappear into Onyx/Volt bg.
+  const [imageColor, setImageColor] = useState("#3D7A8A");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const toggle = (s: string) =>
@@ -52,7 +47,7 @@ function NewProduct() {
         priceCents: Math.round(parseFloat(price) * 100),
         sizes,
         stock: parseInt(stock) || 0,
-        imageColor: imageColor || "#1A1714",
+        imageColor: imageColor || "#3D7A8A",
         imageUrl,
       });
       toast.success("Product saved");

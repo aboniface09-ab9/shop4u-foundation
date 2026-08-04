@@ -5,6 +5,7 @@ import { useProduct } from "@/data/products";
 import { ProductImage } from "@/components/ProductImage";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/cart";
+import { useTenant } from "@/store/tenant";
 import { formatZAR } from "@/lib/format";
 
 export const Route = createFileRoute("/product/$id")({
@@ -16,6 +17,8 @@ function ProductPage() {
   const { data: product, isLoading } = useProduct(id);
   const [size, setSize] = useState<string | undefined>(undefined);
   const add = useCart((s) => s.add);
+  const tenant = useTenant();
+  const vatRegistered = tenant?.vat_registered ?? true;
 
   // Pick the first size as default once the product loads.
   useEffect(() => {
@@ -41,31 +44,39 @@ function ProductPage() {
     );
   }
 
+  // Only show the size picker when there's a real choice to make. A
+  // single size (including a placeholder like "One Size") isn't a
+  // choice, so pool cleaners etc. skip the Size / Size guide UI entirely.
+  const hasSizes = product.sizes.length > 1;
+
   const handleAdd = () => {
-    if (!size) return;
+    // Products with no sizes configured (pool chemicals, supplies, etc.
+    // rather than apparel) don't need a size selection to add to cart.
+    if (hasSizes && !size) return;
     add({
       id: product.id,
       name: product.name,
-      size,
+      size: size ?? "Standard",
       qty: 1,
       price: product.price,
       imageColor: product.imageColor,
+      imageUrl: product.imageUrl,
       category: product.category,
     });
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 md:px-8 py-8 md:py-14">
+    <div className="mx-auto max-w-6xl px-4 md:px-8 py-6 md:py-8">
       <Link
         to="/shop"
-        className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted hover:text-text mb-8"
+        className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted hover:text-text mb-4"
       >
         <ArrowLeft size={14} /> Back to shop
       </Link>
 
-      <div className="grid md:grid-cols-12 gap-10">
-        <div className="md:col-span-7">
-          <div className="aspect-[4/5] overflow-hidden rounded-lg">
+      <div className="grid md:grid-cols-2 gap-8">
+        <div className="mx-auto w-full max-w-md md:max-w-none">
+          <div className="aspect-square max-h-[60vh] overflow-hidden rounded-lg">
             <ProductImage
               name={product.name}
               category={product.category}
@@ -76,47 +87,50 @@ function ProductPage() {
           </div>
         </div>
 
-        <div className="md:col-span-5 md:pt-8">
+        <div className="md:pt-2">
           <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted">{product.category}</p>
-          <h1 className="font-heading text-4xl md:text-5xl font-semibold mt-2 leading-[0.95]">
+          <h1 className="font-heading text-2xl md:text-3xl font-semibold mt-1 leading-tight">
             {product.name}
           </h1>
-          <p className="mt-4 font-mono text-xl">{formatZAR(product.price)}</p>
+          <p className="mt-2 font-mono text-lg">
+            {formatZAR(product.price)}
+            {vatRegistered && <span className="text-muted text-xs ml-2 font-sans">incl. VAT</span>}
+          </p>
 
-          <p className="mt-6 text-muted leading-relaxed">{product.description}</p>
+          <p className="mt-3 text-muted text-sm leading-relaxed">{product.description}</p>
 
-          <div className="mt-8">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Size</span>
-              <button className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted underline">
-                Size guide
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {product.sizes.map((s: string) => (
-                <button
-                  key={s}
-                  onClick={() => setSize(s)}
-                  className={`min-w-[3.25rem] px-3 py-2.5 font-mono text-sm rounded-sm border transition-colors ${
-                    size === s
-                      ? "border-text bg-text text-bg"
-                      : "border-border hover:border-muted"
-                  }`}
-                >
-                  {s}
+          {hasSizes && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Size</span>
+                <button className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted underline">
+                  Size guide
                 </button>
-              ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {product.sizes.map((s: string) => (
+                  <button
+                    key={s}
+                    onClick={() => setSize(s)}
+                    className={`min-w-[3.25rem] px-3 py-2.5 font-mono text-sm rounded-sm border transition-colors ${
+                      size === s
+                        ? "border-text bg-text text-bg"
+                        : "border-border hover:border-muted"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          <Button size="lg" className="w-full mt-8" onClick={handleAdd}>
+          <Button size="lg" className="w-full mt-4" onClick={handleAdd}>
             <ShoppingBag size={16} className="mr-2" /> Add to bag
           </Button>
 
-          <div className="mt-6 pt-6 border-t border-border space-y-2 text-sm text-muted">
+          <div className="mt-4 pt-4 border-t border-border space-y-2 text-sm text-muted">
             <p>{product.stock} in stock</p>
-            <p>Free shipping in Cape Town over R900</p>
-            <p>30-day returns on unworn pieces</p>
           </div>
         </div>
       </div>

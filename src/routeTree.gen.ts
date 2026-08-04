@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShopRouteImport } from './routes/shop'
+import { Route as PlatformRouteImport } from './routes/platform'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DevPayfastTestRouteImport } from './routes/dev-payfast-test'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -33,9 +35,19 @@ const ShopRoute = ShopRouteImport.update({
   path: '/shop',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformRoute = PlatformRouteImport.update({
+  id: '/platform',
+  path: '/platform',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevPayfastTestRoute = DevPayfastTestRouteImport.update({
+  id: '/dev-payfast-test',
+  path: '/dev-payfast-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -124,7 +136,9 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/dev-payfast-test': typeof DevPayfastTestRoute
   '/login': typeof LoginRoute
+  '/platform': typeof PlatformRoute
   '/shop': typeof ShopRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -143,7 +157,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/dev-payfast-test': typeof DevPayfastTestRoute
   '/login': typeof LoginRoute
+  '/platform': typeof PlatformRoute
   '/shop': typeof ShopRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -163,7 +179,9 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/dev-payfast-test': typeof DevPayfastTestRoute
   '/login': typeof LoginRoute
+  '/platform': typeof PlatformRoute
   '/shop': typeof ShopRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -185,7 +203,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cart'
     | '/checkout'
+    | '/dev-payfast-test'
     | '/login'
+    | '/platform'
     | '/shop'
     | '/admin/customers'
     | '/admin/orders'
@@ -204,7 +224,9 @@ export interface FileRouteTypes {
     | '/'
     | '/cart'
     | '/checkout'
+    | '/dev-payfast-test'
     | '/login'
+    | '/platform'
     | '/shop'
     | '/admin/customers'
     | '/admin/orders'
@@ -223,7 +245,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cart'
     | '/checkout'
+    | '/dev-payfast-test'
     | '/login'
+    | '/platform'
     | '/shop'
     | '/admin/customers'
     | '/admin/orders'
@@ -244,7 +268,9 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
+  DevPayfastTestRoute: typeof DevPayfastTestRoute
   LoginRoute: typeof LoginRoute
+  PlatformRoute: typeof PlatformRoute
   ShopRoute: typeof ShopRoute
   MockGatewayRefRoute: typeof MockGatewayRefRoute
   OrderRefRoute: typeof OrderRefRoute
@@ -260,11 +286,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform': {
+      id: '/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof PlatformRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev-payfast-test': {
+      id: '/dev-payfast-test'
+      path: '/dev-payfast-test'
+      fullPath: '/dev-payfast-test'
+      preLoaderRoute: typeof DevPayfastTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -423,7 +463,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
+  DevPayfastTestRoute: DevPayfastTestRoute,
   LoginRoute: LoginRoute,
+  PlatformRoute: PlatformRoute,
   ShopRoute: ShopRoute,
   MockGatewayRefRoute: MockGatewayRefRoute,
   OrderRefRoute: OrderRefRoute,
