@@ -72,6 +72,22 @@ begin
     if not has_function_privilege('anon', f, 'EXECUTE') then raise exception 'FAIL: clients cannot use %', f; end if;
   end loop;
 
+  -- 5b. Orders: strangers cannot change or forge orders, and the public order lookup exposes no personal details.
+  if has_table_privilege('anon', 'public.orders', 'UPDATE') or has_table_privilege('anon', 'public.orders', 'DELETE') then
+    raise exception 'FAIL: anon can update or delete orders'; end if;
+  if exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'orders'
+               and cmd in ('UPDATE', 'DELETE', 'ALL') and (roles && array['public'::name, 'anon'::name])) then
+    raise exception 'FAIL: a policy lets anonymous visitors update or delete orders'; end if;
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'orders'
+                   and cmd = 'INSERT' and with_check like '%pending%') then
+    raise exception 'FAIL: order inserts are not restricted to status pending'; end if;
+  if exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'orders'
+               and cmd = 'INSERT' and coalesce(with_check, 'true') = 'true') then
+    raise exception 'FAIL: an order INSERT policy allows anything'; end if;
+  if (select pg_get_functiondef(p.oid) from pg_proc p where p.proname = 'get_order_by_reference' and p.pronamespace = 'public'::regnamespace)
+       not like '%jsonb_populate_record%' then
+    raise exception 'FAIL: get_order_by_reference still returns full personal details'; end if;
+
   -- 6. Defaults the app relies on.
   if (select count(*) from public.business_settings where id = 1) <> 1 then
     raise exception 'FAIL: business_settings row missing'; end if;
