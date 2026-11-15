@@ -9,7 +9,14 @@ import {
 } from "@/data/platform";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { formatZAR } from "@/lib/format";
 import type { TenantRow } from "@/lib/supabase";
 
@@ -17,7 +24,10 @@ export const Route = createFileRoute("/platform/merchants")({
   component: MerchantsPage,
 });
 
-const BILLING_BADGE: Record<TenantRow["billing_state"], "default" | "secondary" | "destructive" | "outline"> = {
+const BILLING_BADGE: Record<
+  TenantRow["billing_state"],
+  "default" | "secondary" | "destructive" | "outline"
+> = {
   trialing: "outline",
   active: "default",
   past_due: "destructive",
@@ -41,7 +51,9 @@ function MerchantsPage() {
         <h1 className="font-heading text-3xl font-semibold">Merchants</h1>
         <p className="text-muted text-sm mt-1">
           {tenants.length} tenant{tenants.length === 1 ? "" : "s"} total
-          {Object.entries(counts).map(([state, n]) => ` · ${n} ${state}`).join("")}
+          {Object.entries(counts)
+            .map(([state, n]) => ` · ${n} ${state}`)
+            .join("")}
         </p>
       </header>
 
@@ -116,8 +128,8 @@ function MerchantsPage() {
 
       <p className="text-xs text-muted mt-4 mb-10">
         This lists every tenant row (no filtering by whether they've formally signed off as
-        commercially live) — cross-check against your own notes for who's actually a paying
-        customer versus a pilot still in setup.
+        commercially live) — cross-check against your own notes for who's actually a paying customer
+        versus a pilot still in setup.
       </p>
 
       <BillingRunSection />
@@ -215,7 +227,9 @@ function BillingRunSection() {
                     size="sm"
                     variant="outline"
                     disabled={!s.hasCardToken || charge.isPending}
-                    onClick={() => handleCharge(s.id, s.tenant?.store_name ?? s.tenant?.slug ?? s.id)}
+                    onClick={() =>
+                      handleCharge(s.id, s.tenant?.store_name ?? s.tenant?.slug ?? s.id)
+                    }
                   >
                     {charge.isPending ? <Loader2 size={13} className="animate-spin" /> : "Charge"}
                   </Button>

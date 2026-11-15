@@ -21,23 +21,40 @@ describe("contactSchema", () => {
     const r = contactSchema.parse({ name: "Pat", email: "", phone: "" });
     expect(r.email).toBeNull();
     expect(r.phone).toBeNull();
-    expect(contactSchema.parse({ name: "Pat", email: "pat@example.com", phone: "+27 82 000 0000" }).is_primary).toBe(false);
+    expect(
+      contactSchema.parse({ name: "Pat", email: "pat@example.com", phone: "+27 82 000 0000" })
+        .is_primary,
+    ).toBe(false);
   });
 });
 
 describe("projectSchema", () => {
   it("accepts https URLs only", () => {
-    expect(projectSchema.safeParse({ name: "Site", repo_url: "https://github.com/example/site" }).success).toBe(true);
-    for (const bad of ["http://example.com", "javascript:alert(1)", "example.com", "//example.com"]) {
+    expect(
+      projectSchema.safeParse({ name: "Site", repo_url: "https://github.com/example/site" })
+        .success,
+    ).toBe(true);
+    for (const bad of [
+      "http://example.com",
+      "javascript:alert(1)",
+      "example.com",
+      "//example.com",
+    ]) {
       expect(projectSchema.safeParse({ name: "Site", staging_url: bad }).success).toBe(false);
     }
   });
   it("defaults hosting provider to Cloudflare and rejects negative amounts", () => {
     expect(projectSchema.parse({ name: "Site" }).hosting_provider).toBe("Cloudflare");
-    expect(projectSchema.safeParse({ name: "Site", hosting_monthly_cents: -1 }).success).toBe(false);
+    expect(projectSchema.safeParse({ name: "Site", hosting_monthly_cents: -1 }).success).toBe(
+      false,
+    );
   });
   it("rejects malformed dates", () => {
-    expect(projectSchema.safeParse({ name: "Site", domain_expiry: "next year" }).success).toBe(false);
-    expect(projectSchema.parse({ name: "Site", domain_expiry: "2027-08-08" }).domain_expiry).toBe("2027-08-08");
+    expect(projectSchema.safeParse({ name: "Site", domain_expiry: "next year" }).success).toBe(
+      false,
+    );
+    expect(projectSchema.parse({ name: "Site", domain_expiry: "2027-08-08" }).domain_expiry).toBe(
+      "2027-08-08",
+    );
   });
 });

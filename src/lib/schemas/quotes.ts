@@ -50,7 +50,9 @@ export const businessSettingsSchema = z.object({
     .trim()
     .max(254)
     .default("")
-    .refine((v) => v === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), { message: "Enter a valid email" }),
+    .refine((v) => v === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), {
+      message: "Enter a valid email",
+    }),
   phone: text(40),
   bank_name: text(100),
   account_holder: text(200),

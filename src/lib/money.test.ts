@@ -1,13 +1,29 @@
 import { describe, expect, it } from "vitest";
 import { computeTotals, formatCents, percentOfCents, type MoneyLine } from "./money";
 
-const once = (cents: number): MoneyLine => ({ kind: "once_off", quantity: 1, unit_price_cents: cents });
-const monthly = (cents: number): MoneyLine => ({ kind: "monthly", quantity: 1, unit_price_cents: cents });
+const once = (cents: number): MoneyLine => ({
+  kind: "once_off",
+  quantity: 1,
+  unit_price_cents: cents,
+});
+const monthly = (cents: number): MoneyLine => ({
+  kind: "monthly",
+  quantity: 1,
+  unit_price_cents: cents,
+});
 
 // The Ultra Fish Traders quote (fictional-safe: amounts only), ex VAT.
 const ufo: MoneyLine[] = [
-  once(250000), once(500000), once(800000), once(150000), once(200000), once(200000), once(150000),
-  monthly(25000), monthly(25000), monthly(25000),
+  once(250000),
+  once(500000),
+  once(800000),
+  once(150000),
+  once(200000),
+  once(200000),
+  once(150000),
+  monthly(25000),
+  monthly(25000),
+  monthly(25000),
 ];
 
 describe("computeTotals: Ultra Fish quote, no VAT", () => {
@@ -46,10 +62,15 @@ describe("rounding and edge cases", () => {
   it("handles no lines and 0% / 100% deposit", () => {
     expect(computeTotals([], { depositPercent: 50, vatRateBps: 0 }).firstYearCents).toBe(0);
     expect(computeTotals([once(1000)], { depositPercent: 0, vatRateBps: 0 }).depositCents).toBe(0);
-    expect(computeTotals([once(1000)], { depositPercent: 100, vatRateBps: 0 }).balanceCents).toBe(0);
+    expect(computeTotals([once(1000)], { depositPercent: 100, vatRateBps: 0 }).balanceCents).toBe(
+      0,
+    );
   });
   it("multiplies by quantity", () => {
-    const t = computeTotals([{ kind: "once_off", quantity: 3, unit_price_cents: 1500 }], { depositPercent: 50, vatRateBps: 0 });
+    const t = computeTotals([{ kind: "once_off", quantity: 3, unit_price_cents: 1500 }], {
+      depositPercent: 50,
+      vatRateBps: 0,
+    });
     expect(t.onceOffCents).toBe(4500);
   });
   it("formats rand with cents", () => {

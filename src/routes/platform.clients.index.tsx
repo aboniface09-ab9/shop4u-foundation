@@ -2,7 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useClients } from "@/data/clients";
 
 export const Route = createFileRoute("/platform/clients/")({
@@ -24,7 +31,9 @@ function ClientsList() {
         </Button>
       </header>
 
-      {error && <p className="mb-4 text-sm text-danger">Couldn&apos;t load clients: {error.message}</p>}
+      {error && (
+        <p className="mb-4 text-sm text-danger">Couldn&apos;t load clients: {error.message}</p>
+      )}
 
       <div className="rounded-md border border-border bg-surface overflow-hidden">
         <Table>
@@ -53,17 +62,26 @@ function ClientsList() {
             {clients.map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">
-                  <Link to="/platform/clients/$id" params={{ id: c.id }} className="hover:underline">
+                  <Link
+                    to="/platform/clients/$id"
+                    params={{ id: c.id }}
+                    className="hover:underline"
+                  >
                     {c.company_name}
                   </Link>
                   {c.trading_name && <div className="text-xs text-muted">{c.trading_name}</div>}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={c.status === "active" ? "default" : "outline"} className="capitalize">
+                  <Badge
+                    variant={c.status === "active" ? "default" : "outline"}
+                    className="capitalize"
+                  >
                     {c.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="font-mono text-xs">{new Date(c.created_at).toLocaleDateString("en-ZA")}</TableCell>
+                <TableCell className="font-mono text-xs">
+                  {new Date(c.created_at).toLocaleDateString("en-ZA")}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

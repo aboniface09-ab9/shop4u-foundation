@@ -10,7 +10,8 @@ describe("randToCents", () => {
   });
   it("returns null for blank and undefined for invalid", () => {
     expect(randToCents("")).toBeNull();
-    for (const bad of ["abc", "-5", "1.234", "R250", "1e3"]) expect(randToCents(bad)).toBeUndefined();
+    for (const bad of ["abc", "-5", "1.234", "R250", "1e3"])
+      expect(randToCents(bad)).toBeUndefined();
   });
   it("round-trips for display", () => {
     expect(centsToRandInput(75000)).toBe("750.00");

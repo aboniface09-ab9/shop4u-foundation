@@ -43,7 +43,12 @@ export function computeTotals(
   const vatOnceOff = percentOfCents(onceOffCents, opts.vatRateBps);
   const vatDeposit = percentOfCents(depositCents, opts.vatRateBps);
   const vatMonthly = percentOfCents(monthlyCents, opts.vatRateBps);
-  const vat = { onceOff: vatOnceOff, deposit: vatDeposit, balance: vatOnceOff - vatDeposit, monthly: vatMonthly };
+  const vat = {
+    onceOff: vatOnceOff,
+    deposit: vatDeposit,
+    balance: vatOnceOff - vatDeposit,
+    monthly: vatMonthly,
+  };
 
   return {
     onceOffCents,

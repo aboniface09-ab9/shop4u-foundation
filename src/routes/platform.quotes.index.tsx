@@ -2,7 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useQuotes } from "@/data/quotes";
 
 export const Route = createFileRoute("/platform/quotes/")({
@@ -24,7 +31,9 @@ function QuotesList() {
         </Button>
       </header>
 
-      {error && <p className="mb-4 text-sm text-danger">Couldn&apos;t load quotes: {error.message}</p>}
+      {error && (
+        <p className="mb-4 text-sm text-danger">Couldn&apos;t load quotes: {error.message}</p>
+      )}
 
       <div className="rounded-md border border-border bg-surface overflow-hidden">
         <Table>
@@ -60,11 +69,16 @@ function QuotesList() {
                 </TableCell>
                 <TableCell>{q.client?.company_name ?? "—"}</TableCell>
                 <TableCell>
-                  <Badge variant={q.status === "accepted" ? "default" : "outline"} className="capitalize">
+                  <Badge
+                    variant={q.status === "accepted" ? "default" : "outline"}
+                    className="capitalize"
+                  >
                     {q.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="font-mono text-xs">{new Date(q.valid_until).toLocaleDateString("en-ZA")}</TableCell>
+                <TableCell className="font-mono text-xs">
+                  {new Date(q.valid_until).toLocaleDateString("en-ZA")}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

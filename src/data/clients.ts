@@ -160,7 +160,9 @@ export function useAddContact(clientId: string) {
           .eq("is_primary", true);
         if (demoteError) throw demoteError;
       }
-      const { error } = await supabase.from("client_contacts").insert({ ...input, client_id: clientId });
+      const { error } = await supabase
+        .from("client_contacts")
+        .insert({ ...input, client_id: clientId });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["contacts", clientId] }),
@@ -206,11 +208,18 @@ export function useProject(id: string) {
   });
 }
 
-async function logActivity(entityType: string, entityId: string, event: string, detail: Record<string, unknown> = {}) {
+async function logActivity(
+  entityType: string,
+  entityId: string,
+  event: string,
+  detail: Record<string, unknown> = {},
+) {
   const { data } = await supabase.auth.getUser();
   const actor = data.user?.id;
   if (!actor) return;
-  await supabase.from("activity_log").insert({ entity_type: entityType, entity_id: entityId, event, detail, actor });
+  await supabase
+    .from("activity_log")
+    .insert({ entity_type: entityType, entity_id: entityId, event, detail, actor });
 }
 
 /** Creates the project and seeds the starter content checklist. */
@@ -225,9 +234,15 @@ export function useCreateProject(clientId: string) {
         .single();
       if (error) throw error;
       const project = data as ProjectRow;
-      const { error: itemsError } = await supabase.from("content_items").insert(
-        DEFAULT_CONTENT_CHECKLIST.map((item, i) => ({ project_id: project.id, item, sort_order: i })),
-      );
+      const { error: itemsError } = await supabase
+        .from("content_items")
+        .insert(
+          DEFAULT_CONTENT_CHECKLIST.map((item, i) => ({
+            project_id: project.id,
+            item,
+            sort_order: i,
+          })),
+        );
       if (itemsError) throw itemsError;
       await logActivity("project", project.id, "project_created");
       return project;
@@ -303,7 +318,9 @@ export function useAddContentItem(projectId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: ContentItemInput) => {
-      const { error } = await supabase.from("content_items").insert({ ...input, project_id: projectId, sort_order: 100 });
+      const { error } = await supabase
+        .from("content_items")
+        .insert({ ...input, project_id: projectId, sort_order: 100 });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["content", projectId] }),

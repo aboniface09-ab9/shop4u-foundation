@@ -53,7 +53,15 @@ export function Field({
   );
 }
 
-export function Panel({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
+export function Panel({
+  title,
+  children,
+  action,
+}: {
+  title: string;
+  children: ReactNode;
+  action?: ReactNode;
+}) {
   return (
     <section className="rounded-md border border-border bg-surface">
       <header className="flex items-center justify-between border-b border-border px-4 py-3">

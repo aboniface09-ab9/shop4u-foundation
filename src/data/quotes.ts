@@ -60,7 +60,11 @@ export function usePriceList() {
   return useQuery({
     queryKey: ["price-list"],
     queryFn: async (): Promise<PriceItemRow[]> => {
-      const { data, error } = await supabase.from("price_list_items").select("*").order("kind", { ascending: false }).order("sort_order");
+      const { data, error } = await supabase
+        .from("price_list_items")
+        .select("*")
+        .order("kind", { ascending: false })
+        .order("sort_order");
       if (error) throw error;
       return data as PriceItemRow[];
     },
@@ -73,7 +77,9 @@ export function useSavePriceItem() {
     mutationFn: async ({ id, input }: { id?: string; input: PriceItemInput }) => {
       const { error } = id
         ? await supabase.from("price_list_items").update(input).eq("id", id)
-        : await supabase.from("price_list_items").insert({ ...input, sort_order: input.kind === "monthly" ? 150 : 90 });
+        : await supabase
+            .from("price_list_items")
+            .insert({ ...input, sort_order: input.kind === "monthly" ? 150 : 90 });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["price-list"] }),
@@ -86,7 +92,11 @@ export function useBusinessSettings() {
   return useQuery({
     queryKey: ["business-settings"],
     queryFn: async (): Promise<BusinessSettingsRow> => {
-      const { data, error } = await supabase.from("business_settings").select("*").eq("id", 1).single();
+      const { data, error } = await supabase
+        .from("business_settings")
+        .select("*")
+        .eq("id", 1)
+        .single();
       if (error) throw error;
       return data as BusinessSettingsRow;
     },
@@ -129,7 +139,13 @@ export function useQuote(id: string) {
     queryFn: async (): Promise<{ quote: QuoteRow; lines: QuoteLineRow[] }> => {
       const [q, l] = await Promise.all([
         supabase.from("quotes").select("*").eq("id", id).single(),
-        supabase.from("quote_lines").select("*").eq("quote_id", id).order("kind", { ascending: false }).order("sort_order").order("id"),
+        supabase
+          .from("quote_lines")
+          .select("*")
+          .eq("quote_id", id)
+          .order("kind", { ascending: false })
+          .order("sort_order")
+          .order("id"),
       ]);
       if (q.error) throw q.error;
       if (l.error) throw l.error;
@@ -142,12 +158,24 @@ export function useQuote(id: string) {
 export function useCreateQuote() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ clientId, projectId }: { clientId: string; projectId: string | null }): Promise<QuoteRow> => {
-      const { data: settings, error: sErr } = await supabase.from("business_settings").select("*").eq("id", 1).single();
+    mutationFn: async ({
+      clientId,
+      projectId,
+    }: {
+      clientId: string;
+      projectId: string | null;
+    }): Promise<QuoteRow> => {
+      const { data: settings, error: sErr } = await supabase
+        .from("business_settings")
+        .select("*")
+        .eq("id", 1)
+        .single();
       if (sErr) throw sErr;
       const s = settings as BusinessSettingsRow;
 
-      const { data: number, error: nErr } = await supabase.rpc("next_document_number", { p_kind: "quote" });
+      const { data: number, error: nErr } = await supabase.rpc("next_document_number", {
+        p_kind: "quote",
+      });
       if (nErr) throw nErr;
 
       const valid = new Date();
@@ -200,7 +228,9 @@ export function useDeleteQuote() {
 export function useAddLine(quoteId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: QuoteLineInput & { price_item_id?: string | null; sort_order?: number }) => {
+    mutationFn: async (
+      input: QuoteLineInput & { price_item_id?: string | null; sort_order?: number },
+    ) => {
       const { error } = await supabase.from("quote_lines").insert({ ...input, quote_id: quoteId });
       if (error) throw error;
     },

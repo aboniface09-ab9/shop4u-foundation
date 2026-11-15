@@ -3,7 +3,14 @@ import { useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Field, formToObject, Panel, selectClass, zodFieldErrors, type FieldErrors } from "@/components/platform/form-utils";
+import {
+  Field,
+  formToObject,
+  Panel,
+  selectClass,
+  zodFieldErrors,
+  type FieldErrors,
+} from "@/components/platform/form-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,7 +80,15 @@ function QuoteBuilder() {
   );
 }
 
-function LinesPanel({ quote, lines, locked }: { quote: QuoteRow; lines: QuoteLineRow[]; locked: boolean }) {
+function LinesPanel({
+  quote,
+  lines,
+  locked,
+}: {
+  quote: QuoteRow;
+  lines: QuoteLineRow[];
+  locked: boolean;
+}) {
   const { data: priceList = [] } = usePriceList();
   const add = useAddLine(quote.id);
   const [pickId, setPickId] = useState("");
@@ -91,7 +106,9 @@ function LinesPanel({ quote, lines, locked }: { quote: QuoteRow; lines: QuoteLin
           const rows = lines.filter((l) => l.kind === s.kind);
           return (
             <div key={s.kind}>
-              <h3 className="mb-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">{s.title}</h3>
+              <h3 className="mb-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+                {s.title}
+              </h3>
               {rows.length === 0 && <p className="text-sm text-muted">None yet.</p>}
               <ul className="divide-y divide-border">
                 {rows.map((l) => (
@@ -130,11 +147,17 @@ function LinesPanel({ quote, lines, locked }: { quote: QuoteRow; lines: QuoteLin
           >
             <div className="flex-1">
               <Field label="Add from price list" name="pick">
-                <select id="pick" className={selectClass} value={pickId} onChange={(e) => setPickId(e.target.value)}>
+                <select
+                  id="pick"
+                  className={selectClass}
+                  value={pickId}
+                  onChange={(e) => setPickId(e.target.value)}
+                >
                   <option value="">Choose an item…</option>
                   {active.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} · {formatCents(p.unit_price_cents)} {p.kind === "monthly" ? "/mo" : ""}
+                      {p.name} · {formatCents(p.unit_price_cents)}{" "}
+                      {p.kind === "monthly" ? "/mo" : ""}
                     </option>
                   ))}
                 </select>
@@ -151,7 +174,15 @@ function LinesPanel({ quote, lines, locked }: { quote: QuoteRow; lines: QuoteLin
   );
 }
 
-function LineRow({ line, quoteId, locked }: { line: QuoteLineRow; quoteId: string; locked: boolean }) {
+function LineRow({
+  line,
+  quoteId,
+  locked,
+}: {
+  line: QuoteLineRow;
+  quoteId: string;
+  locked: boolean;
+}) {
   const update = useUpdateLine(quoteId);
   const remove = useDeleteLine(quoteId);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -177,7 +208,8 @@ function LineRow({ line, quoteId, locked }: { line: QuoteLineRow; quoteId: strin
           e.preventDefault();
           const raw = formToObject(e.currentTarget);
           const cents = randToCents(raw.price_rand ?? "");
-          if (cents === undefined || cents === null) return setErrors({ unit_price_cents: "Enter a rand amount" });
+          if (cents === undefined || cents === null)
+            return setErrors({ unit_price_cents: "Enter a rand amount" });
           const parsed = quoteLineSchema.safeParse({
             kind: line.kind,
             name: raw.name,
@@ -200,10 +232,20 @@ function LineRow({ line, quoteId, locked }: { line: QuoteLineRow; quoteId: strin
           <Input id={`n-${line.id}`} name="name" defaultValue={line.name} maxLength={200} />
         </Field>
         <Field label="Qty" name={`q-${line.id}`} error={errors.quantity}>
-          <Input id={`q-${line.id}`} name="quantity" inputMode="numeric" defaultValue={String(line.quantity)} />
+          <Input
+            id={`q-${line.id}`}
+            name="quantity"
+            inputMode="numeric"
+            defaultValue={String(line.quantity)}
+          />
         </Field>
         <Field label="Unit price (rand)" name={`p-${line.id}`} error={errors.unit_price_cents}>
-          <Input id={`p-${line.id}`} name="price_rand" inputMode="decimal" defaultValue={centsToRandInput(line.unit_price_cents)} />
+          <Input
+            id={`p-${line.id}`}
+            name="price_rand"
+            inputMode="decimal"
+            defaultValue={centsToRandInput(line.unit_price_cents)}
+          />
         </Field>
         <div className="flex gap-1">
           <Button type="submit" size="sm" variant="outline" disabled={update.isPending}>
@@ -215,13 +257,19 @@ function LineRow({ line, quoteId, locked }: { line: QuoteLineRow; quoteId: strin
             variant="ghost"
             aria-label={`Remove ${line.name}`}
             disabled={remove.isPending}
-            onClick={() => remove.mutate(line.id, { onError: (err) => toast.error("Couldn't remove", { description: err.message }) })}
+            onClick={() =>
+              remove.mutate(line.id, {
+                onError: (err) => toast.error("Couldn't remove", { description: err.message }),
+              })
+            }
           >
             <Trash2 size={14} />
           </Button>
         </div>
       </form>
-      <div className="mt-1 text-right font-mono text-xs text-muted">Line total {formatCents(lineTotalCents(line))}</div>
+      <div className="mt-1 text-right font-mono text-xs text-muted">
+        Line total {formatCents(lineTotalCents(line))}
+      </div>
     </li>
   );
 }
@@ -239,7 +287,8 @@ function CustomLineForm({ quoteId }: { quoteId: string }) {
         const form = e.currentTarget;
         const raw = formToObject(form);
         const cents = randToCents(raw.price_rand ?? "");
-        if (cents === undefined || cents === null) return setErrors({ unit_price_cents: "Enter a rand amount" });
+        if (cents === undefined || cents === null)
+          return setErrors({ unit_price_cents: "Enter a rand amount" });
         const parsed = quoteLineSchema.safeParse({
           kind: raw.kind,
           name: raw.name,
@@ -251,7 +300,10 @@ function CustomLineForm({ quoteId }: { quoteId: string }) {
         setErrors({});
         add.mutate(
           { ...parsed.data, sort_order: 200 },
-          { onSuccess: () => form.reset(), onError: (err) => toast.error("Couldn't add", { description: err.message }) },
+          {
+            onSuccess: () => form.reset(),
+            onError: (err) => toast.error("Couldn't add", { description: err.message }),
+          },
         );
       }}
     >
@@ -282,7 +334,11 @@ function CustomLineForm({ quoteId }: { quoteId: string }) {
 
 function TotalsPanel({ quote, lines }: { quote: QuoteRow; lines: QuoteLineRow[] }) {
   const t = useMemo(
-    () => computeTotals(lines, { depositPercent: quote.deposit_percent, vatRateBps: quote.vat_rate_bps }),
+    () =>
+      computeTotals(lines, {
+        depositPercent: quote.deposit_percent,
+        vatRateBps: quote.vat_rate_bps,
+      }),
     [lines, quote.deposit_percent, quote.vat_rate_bps],
   );
   const hasVat = quote.vat_rate_bps > 0;
@@ -336,25 +392,52 @@ function SettingsPanel({ quote, locked }: { quote: QuoteRow; locked: boolean }) 
       >
         <fieldset disabled={locked} className="contents">
           <Field label="Valid until" name="valid_until" error={errors.valid_until}>
-            <Input id="valid_until" name="valid_until" type="date" defaultValue={quote.valid_until} />
+            <Input
+              id="valid_until"
+              name="valid_until"
+              type="date"
+              defaultValue={quote.valid_until}
+            />
           </Field>
           <Field label="Deposit %" name="deposit_percent" error={errors.deposit_percent}>
-            <Input id="deposit_percent" name="deposit_percent" inputMode="numeric" defaultValue={String(quote.deposit_percent)} />
+            <Input
+              id="deposit_percent"
+              name="deposit_percent"
+              inputMode="numeric"
+              defaultValue={String(quote.deposit_percent)}
+            />
           </Field>
           <Field label="VAT" name="vat_rate_bps" error={errors.vat_rate_bps}>
-            <select id="vat_rate_bps" name="vat_rate_bps" className={selectClass} defaultValue={String(quote.vat_rate_bps)}>
+            <select
+              id="vat_rate_bps"
+              name="vat_rate_bps"
+              className={selectClass}
+              defaultValue={String(quote.vat_rate_bps)}
+            >
               <option value="0">No VAT</option>
               <option value="1500">15% VAT added</option>
             </select>
           </Field>
           <div className="md:col-span-3">
             <Field label="Introduction" name="intro" error={errors.intro}>
-              <Textarea id="intro" name="intro" rows={3} defaultValue={quote.intro} maxLength={4000} />
+              <Textarea
+                id="intro"
+                name="intro"
+                rows={3}
+                defaultValue={quote.intro}
+                maxLength={4000}
+              />
             </Field>
           </div>
           <div className="md:col-span-3">
             <Field label="Terms" name="terms" error={errors.terms}>
-              <Textarea id="terms" name="terms" rows={6} defaultValue={quote.terms} maxLength={8000} />
+              <Textarea
+                id="terms"
+                name="terms"
+                rows={6}
+                defaultValue={quote.terms}
+                maxLength={8000}
+              />
             </Field>
           </div>
           {!locked && (

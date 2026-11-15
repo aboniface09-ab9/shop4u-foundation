@@ -68,7 +68,9 @@ export const contactSchema = z.object({
     .nullable()
     .optional()
     .transform((v) => v ?? null)
-    .refine((v) => v === null || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), { message: "Enter a valid email" }),
+    .refine((v) => v === null || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), {
+      message: "Enter a valid email",
+    }),
   // South African-friendly but permissive: digits, spaces, +, -, ( )
   phone: z
     .string()
@@ -78,7 +80,9 @@ export const contactSchema = z.object({
     .nullable()
     .optional()
     .transform((v) => v ?? null)
-    .refine((v) => v === null || /^[0-9+\-()\s]{5,40}$/.test(v), { message: "Enter a valid phone number" }),
+    .refine((v) => v === null || /^[0-9+\-()\s]{5,40}$/.test(v), {
+      message: "Enter a valid phone number",
+    }),
   role: optionalText(100),
   is_primary: z.boolean().default(false),
 });
@@ -98,7 +102,13 @@ export const projectSchema = z.object({
   credential_location: optionalText(200),
   hosting_provider: z.string().trim().min(1).max(100).default("Cloudflare"),
   hosting_plan: optionalText(100),
-  hosting_monthly_cents: z.number().int().min(0).nullable().optional().transform((v) => v ?? null),
+  hosting_monthly_cents: z
+    .number()
+    .int()
+    .min(0)
+    .nullable()
+    .optional()
+    .transform((v) => v ?? null),
   hosting_start_date: optionalDate,
 });
 export type ProjectInput = z.infer<typeof projectSchema>;

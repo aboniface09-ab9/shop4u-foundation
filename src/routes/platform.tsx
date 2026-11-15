@@ -80,7 +80,10 @@ function PlatformLayout() {
             <LogOut size={12} /> Sign out
           </button>
         </div>
-        <nav aria-label="Platform sections" className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 md:px-10">
+        <nav
+          aria-label="Platform sections"
+          className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 md:px-10"
+        >
           {NAV.map((item) => (
             <Link
               key={item.to}

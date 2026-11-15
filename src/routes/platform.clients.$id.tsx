@@ -4,7 +4,13 @@ import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ClientForm } from "@/components/platform/ClientForm";
-import { Field, formToObject, Panel, zodFieldErrors, type FieldErrors } from "@/components/platform/form-utils";
+import {
+  Field,
+  formToObject,
+  Panel,
+  zodFieldErrors,
+  type FieldErrors,
+} from "@/components/platform/form-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,7 +96,9 @@ function ContactsPanel({ clientId }: { clientId: string }) {
               disabled={remove.isPending}
               onClick={() => {
                 if (!window.confirm(`Delete contact ${c.name}?`)) return;
-                remove.mutate(c.id, { onError: (err) => toast.error("Couldn't delete", { description: err.message }) });
+                remove.mutate(c.id, {
+                  onError: (err) => toast.error("Couldn't delete", { description: err.message }),
+                });
               }}
             >
               <Trash2 size={14} />
@@ -155,7 +163,11 @@ function ProjectsPanel({ clientId }: { clientId: string }) {
         {projects.length === 0 && <li className="py-2 text-sm text-muted">No projects yet.</li>}
         {projects.map((p) => (
           <li key={p.id} className="flex items-center justify-between gap-3 py-2">
-            <Link to="/platform/projects/$id" params={{ id: p.id }} className="text-sm font-medium hover:underline">
+            <Link
+              to="/platform/projects/$id"
+              params={{ id: p.id }}
+              className="text-sm font-medium hover:underline"
+            >
               {p.name}
             </Link>
             <Badge variant={p.stage === "live" ? "default" : "outline"} className="capitalize">
@@ -170,7 +182,9 @@ function ProjectsPanel({ clientId }: { clientId: string }) {
         className="flex flex-col gap-3 sm:flex-row sm:items-end"
         onSubmit={(e) => {
           e.preventDefault();
-          const parsed = projectSchema.pick({ name: true }).safeParse(formToObject(e.currentTarget));
+          const parsed = projectSchema
+            .pick({ name: true })
+            .safeParse(formToObject(e.currentTarget));
           if (!parsed.success) return setErrors(zodFieldErrors(parsed.error));
           setErrors({});
           create.mutate(projectSchema.parse({ name: parsed.data.name }), {
@@ -184,7 +198,12 @@ function ProjectsPanel({ clientId }: { clientId: string }) {
       >
         <div className="flex-1">
           <Field label="New project name" name="project_name" error={errors.name}>
-            <Input id="project_name" name="name" maxLength={200} placeholder="e.g. Company website" />
+            <Input
+              id="project_name"
+              name="name"
+              maxLength={200}
+              placeholder="e.g. Company website"
+            />
           </Field>
         </div>
         <Button type="submit" variant="outline" disabled={create.isPending}>

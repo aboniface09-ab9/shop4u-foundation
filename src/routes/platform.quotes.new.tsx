@@ -32,7 +32,8 @@ function NewQuote() {
               { clientId, projectId: projectId || null },
               {
                 onSuccess: (q) => navigate({ to: "/platform/quotes/$id", params: { id: q.id } }),
-                onError: (err) => toast.error("Couldn't create quote", { description: err.message }),
+                onError: (err) =>
+                  toast.error("Couldn't create quote", { description: err.message }),
               },
             );
           }}
@@ -56,7 +57,13 @@ function NewQuote() {
             </select>
           </Field>
           <Field label="Project (optional)" name="project">
-            <select id="project" className={selectClass} value={projectId} disabled={!clientId} onChange={(e) => setProjectId(e.target.value)}>
+            <select
+              id="project"
+              className={selectClass}
+              value={projectId}
+              disabled={!clientId}
+              onChange={(e) => setProjectId(e.target.value)}
+            >
               <option value="">No project yet</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>

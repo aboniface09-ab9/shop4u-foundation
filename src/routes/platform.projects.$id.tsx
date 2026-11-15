@@ -3,7 +3,14 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Field, formToObject, Panel, selectClass, zodFieldErrors, type FieldErrors } from "@/components/platform/form-utils";
+import {
+  Field,
+  formToObject,
+  Panel,
+  selectClass,
+  zodFieldErrors,
+  type FieldErrors,
+} from "@/components/platform/form-utils";
 import { ProjectForm } from "@/components/platform/ProjectForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +46,11 @@ function ProjectPage() {
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <Link to="/platform/clients/$id" params={{ id: project.client_id }} className="text-xs text-muted hover:text-text">
+        <Link
+          to="/platform/clients/$id"
+          params={{ id: project.client_id }}
+          className="text-xs text-muted hover:text-text"
+        >
           ← {client?.company_name ?? "Client"}
         </Link>
         <h1 className="font-heading text-3xl font-semibold mt-1">{project.name}</h1>
@@ -58,7 +69,8 @@ function ProjectPage() {
                 onClick={() =>
                   setStage.mutate(stage, {
                     onSuccess: () => toast.success(`Stage: ${stage}`),
-                    onError: (err) => toast.error("Couldn't change stage", { description: err.message }),
+                    onError: (err) =>
+                      toast.error("Couldn't change stage", { description: err.message }),
                   })
                 }
               >
@@ -68,7 +80,9 @@ function ProjectPage() {
           ))}
         </ol>
         {project.launched_at && (
-          <p className="mt-3 text-xs text-muted">Launched {new Date(project.launched_at).toLocaleDateString("en-ZA")}</p>
+          <p className="mt-3 text-xs text-muted">
+            Launched {new Date(project.launched_at).toLocaleDateString("en-ZA")}
+          </p>
         )}
       </Panel>
 
@@ -112,8 +126,14 @@ function ContentPanel({ projectId }: { projectId: string }) {
                 value={it.status}
                 onChange={(e) =>
                   update.mutate(
-                    { id: it.id, patch: { status: e.target.value as (typeof CONTENT_STATUSES)[number] } },
-                    { onError: (err) => toast.error("Couldn't update", { description: err.message }) },
+                    {
+                      id: it.id,
+                      patch: { status: e.target.value as (typeof CONTENT_STATUSES)[number] },
+                    },
+                    {
+                      onError: (err) =>
+                        toast.error("Couldn't update", { description: err.message }),
+                    },
                   )
                 }
               >
@@ -130,7 +150,9 @@ function ContentPanel({ projectId }: { projectId: string }) {
                 disabled={remove.isPending}
                 onClick={() => {
                   if (!window.confirm(`Remove “${it.item}”?`)) return;
-                  remove.mutate(it.id, { onError: (err) => toast.error("Couldn't delete", { description: err.message }) });
+                  remove.mutate(it.id, {
+                    onError: (err) => toast.error("Couldn't delete", { description: err.message }),
+                  });
                 }}
               >
                 <Trash2 size={14} />
@@ -182,7 +204,9 @@ function ActivityPanel({ projectId }: { projectId: string }) {
                 {r.event.replace(/_/g, " ")}
                 {d.from && d.to ? `: ${d.from} → ${d.to}` : ""}
               </span>
-              <span className="font-mono text-xs text-muted">{new Date(r.created_at).toLocaleString("en-ZA")}</span>
+              <span className="font-mono text-xs text-muted">
+                {new Date(r.created_at).toLocaleString("en-ZA")}
+              </span>
             </li>
           );
         })}

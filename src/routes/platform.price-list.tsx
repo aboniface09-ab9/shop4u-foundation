@@ -2,12 +2,26 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { Field, formToObject, Panel, selectClass, zodFieldErrors, type FieldErrors } from "@/components/platform/form-utils";
+import {
+  Field,
+  formToObject,
+  Panel,
+  selectClass,
+  zodFieldErrors,
+  type FieldErrors,
+} from "@/components/platform/form-utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { usePriceList, useSavePriceItem, type PriceItemRow } from "@/data/quotes";
 import { centsToRandInput, randToCents } from "@/lib/money-input";
 import { formatCents } from "@/lib/money";
@@ -28,8 +42,8 @@ function PriceListPage() {
         <div>
           <h1 className="font-heading text-3xl font-semibold">Price list</h1>
           <p className="text-muted text-sm mt-1">
-            Reusable line items for quotes. Prices are ex VAT. Changing a price here never changes a quote that already
-            has the line.
+            Reusable line items for quotes. Prices are ex VAT. Changing a price here never changes a
+            quote that already has the line.
           </p>
         </div>
         <Button onClick={() => setEditing("new")}>New item</Button>
@@ -86,9 +100,15 @@ function PriceListPage() {
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline">{i.kind === "monthly" ? "Monthly" : "Once-off"}</Badge>
-                  {!i.active && <Badge variant="secondary" className="ml-1">Inactive</Badge>}
+                  {!i.active && (
+                    <Badge variant="secondary" className="ml-1">
+                      Inactive
+                    </Badge>
+                  )}
                 </TableCell>
-                <TableCell className="text-right font-mono text-sm">{formatCents(i.unit_price_cents)}</TableCell>
+                <TableCell className="text-right font-mono text-sm">
+                  {formatCents(i.unit_price_cents)}
+                </TableCell>
                 <TableCell>
                   <Button size="sm" variant="ghost" onClick={() => setEditing(i)}>
                     Edit
@@ -145,7 +165,12 @@ function ItemForm({
           <Input id="code" name="code" defaultValue={item?.code ?? ""} maxLength={40} />
         </Field>
         <Field label="Type" name="kind" error={errors.kind}>
-          <select id="kind" name="kind" defaultValue={item?.kind ?? "once_off"} className={selectClass}>
+          <select
+            id="kind"
+            name="kind"
+            defaultValue={item?.kind ?? "once_off"}
+            className={selectClass}
+          >
             {LINE_KINDS.map((k) => (
               <option key={k} value={k}>
                 {k === "monthly" ? "Monthly" : "Once-off"}
@@ -160,14 +185,26 @@ function ItemForm({
         </div>
         <div className="md:col-span-2">
           <Field label="What it covers" name="description" error={errors.description}>
-            <Textarea id="description" name="description" defaultValue={item?.description ?? ""} rows={2} maxLength={1000} />
+            <Textarea
+              id="description"
+              name="description"
+              defaultValue={item?.description ?? ""}
+              rows={2}
+              maxLength={1000}
+            />
           </Field>
         </div>
         <Field label="Price in rand (ex VAT)" name="price_rand" error={errors.unit_price_cents}>
-          <Input id="price_rand" name="price_rand" inputMode="decimal" defaultValue={centsToRandInput(item?.unit_price_cents)} />
+          <Input
+            id="price_rand"
+            name="price_rand"
+            inputMode="decimal"
+            defaultValue={centsToRandInput(item?.unit_price_cents)}
+          />
         </Field>
         <label className="flex items-center gap-2 self-end pb-2 text-sm">
-          <input type="checkbox" name="active" defaultChecked={item?.active ?? true} /> Active (shown when building quotes)
+          <input type="checkbox" name="active" defaultChecked={item?.active ?? true} /> Active
+          (shown when building quotes)
         </label>
         <div className="flex gap-2 md:col-span-2">
           <Button type="submit" disabled={busy}>

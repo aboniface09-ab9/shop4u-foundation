@@ -1,8 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { businessSettingsSchema, priceItemSchema, quoteLineSchema, quoteSettingsSchema } from "./quotes";
+import {
+  businessSettingsSchema,
+  priceItemSchema,
+  quoteLineSchema,
+  quoteSettingsSchema,
+} from "./quotes";
 
 describe("priceItemSchema", () => {
-  const base = { code: "design", name: "Design", kind: "once_off" as const, unit_price_cents: 500000 };
+  const base = {
+    code: "design",
+    name: "Design",
+    kind: "once_off" as const,
+    unit_price_cents: 500000,
+  };
   it("uppercases the code and defaults active", () => {
     const r = priceItemSchema.parse(base);
     expect(r.code).toBe("DESIGN");
@@ -18,9 +28,26 @@ describe("priceItemSchema", () => {
 
 describe("quoteLineSchema", () => {
   it("coerces quantity from a form string and bounds it", () => {
-    expect(quoteLineSchema.parse({ kind: "monthly", name: "Hosting", quantity: "2", unit_price_cents: 25000 }).quantity).toBe(2);
-    expect(quoteLineSchema.safeParse({ kind: "monthly", name: "x", quantity: "0", unit_price_cents: 1 }).success).toBe(false);
-    expect(quoteLineSchema.safeParse({ kind: "monthly", name: "x", quantity: "1.5", unit_price_cents: 1 }).success).toBe(false);
+    expect(
+      quoteLineSchema.parse({
+        kind: "monthly",
+        name: "Hosting",
+        quantity: "2",
+        unit_price_cents: 25000,
+      }).quantity,
+    ).toBe(2);
+    expect(
+      quoteLineSchema.safeParse({ kind: "monthly", name: "x", quantity: "0", unit_price_cents: 1 })
+        .success,
+    ).toBe(false);
+    expect(
+      quoteLineSchema.safeParse({
+        kind: "monthly",
+        name: "x",
+        quantity: "1.5",
+        unit_price_cents: 1,
+      }).success,
+    ).toBe(false);
   });
 });
 
@@ -36,7 +63,11 @@ describe("quoteSettingsSchema", () => {
 
 describe("businessSettingsSchema", () => {
   it("requires legal name and validates email and account number", () => {
-    const ok = { legal_name: "Example (Pty) Ltd", default_validity_days: "30", default_deposit_percent: "50" };
+    const ok = {
+      legal_name: "Example (Pty) Ltd",
+      default_validity_days: "30",
+      default_deposit_percent: "50",
+    };
     expect(businessSettingsSchema.safeParse(ok).success).toBe(true);
     expect(businessSettingsSchema.safeParse({ ...ok, legal_name: "" }).success).toBe(false);
     expect(businessSettingsSchema.safeParse({ ...ok, email: "nope" }).success).toBe(false);

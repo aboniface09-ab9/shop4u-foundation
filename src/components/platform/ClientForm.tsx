@@ -33,16 +33,36 @@ export function ClientForm({
       }}
     >
       <Field label="Company name *" name="company_name" error={errors.company_name}>
-        <Input id="company_name" name="company_name" defaultValue={client?.company_name ?? ""} maxLength={200} />
+        <Input
+          id="company_name"
+          name="company_name"
+          defaultValue={client?.company_name ?? ""}
+          maxLength={200}
+        />
       </Field>
       <Field label="Trading name" name="trading_name" error={errors.trading_name}>
-        <Input id="trading_name" name="trading_name" defaultValue={client?.trading_name ?? ""} maxLength={200} />
+        <Input
+          id="trading_name"
+          name="trading_name"
+          defaultValue={client?.trading_name ?? ""}
+          maxLength={200}
+        />
       </Field>
       <Field label="VAT number" name="vat_number" error={errors.vat_number}>
-        <Input id="vat_number" name="vat_number" defaultValue={client?.vat_number ?? ""} maxLength={30} />
+        <Input
+          id="vat_number"
+          name="vat_number"
+          defaultValue={client?.vat_number ?? ""}
+          maxLength={30}
+        />
       </Field>
       <Field label="Status" name="status" error={errors.status}>
-        <select id="status" name="status" defaultValue={client?.status ?? "lead"} className={selectClass}>
+        <select
+          id="status"
+          name="status"
+          defaultValue={client?.status ?? "lead"}
+          className={selectClass}
+        >
           {CLIENT_STATUSES.map((s) => (
             <option key={s} value={s}>
               {s}
@@ -52,12 +72,29 @@ export function ClientForm({
       </Field>
       <div className="md:col-span-2">
         <Field label="Billing address" name="billing_address" error={errors.billing_address}>
-          <Textarea id="billing_address" name="billing_address" defaultValue={client?.billing_address ?? ""} rows={2} maxLength={500} />
+          <Textarea
+            id="billing_address"
+            name="billing_address"
+            defaultValue={client?.billing_address ?? ""}
+            rows={2}
+            maxLength={500}
+          />
         </Field>
       </div>
       <div className="md:col-span-2">
-        <Field label="Notes" name="notes" error={errors.notes} hint="Internal only. Don't store passwords or ID numbers here.">
-          <Textarea id="notes" name="notes" defaultValue={client?.notes ?? ""} rows={3} maxLength={4000} />
+        <Field
+          label="Notes"
+          name="notes"
+          error={errors.notes}
+          hint="Internal only. Don't store passwords or ID numbers here."
+        >
+          <Textarea
+            id="notes"
+            name="notes"
+            defaultValue={client?.notes ?? ""}
+            rows={3}
+            maxLength={4000}
+          />
         </Field>
       </div>
       <div className="md:col-span-2">
