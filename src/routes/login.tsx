@@ -90,6 +90,11 @@ function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <div className="text-right">
+              <Link to="/reset-password" className="text-xs text-muted hover:text-text">
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           {error && (

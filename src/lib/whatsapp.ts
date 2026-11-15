@@ -10,7 +10,7 @@
  */
 
 import { formatZAR } from "@/lib/format";
-import { SHIPPING_FLAT, calcOrderTotals } from "@/store/cart";
+import { calcOrderTotals } from "@/store/cart";
 
 export type WhatsAppOrderInput = {
   orderRef?: string; // e.g. "ONX-1043" — optional if called before Supabase order is created
@@ -36,6 +36,8 @@ export type WhatsAppOrderInput = {
   whatsappNumber?: string | null;
   /** Defaults to true — pass the tenant's vat_registered flag. */
   vatRegistered?: boolean;
+  /** Delivery fee in rand for this order. Defaults to 0. */
+  shippingFee?: number;
 };
 
 const FALLBACK_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER ?? "27000000000";
@@ -44,7 +46,7 @@ export function buildWhatsAppUrl(input: WhatsAppOrderInput): string {
   const shopWhatsapp = input.whatsappNumber || FALLBACK_WHATSAPP;
   const vatRegistered = input.vatRegistered ?? true;
   const sub = input.items.reduce((acc, i) => acc + i.price * i.qty, 0);
-  const shipping = SHIPPING_FLAT;
+  const shipping = input.shippingFee ?? 0;
   // Listed prices are VAT-inclusive — VAT is extracted for display, never
   // added on top. Not-VAT-registered tenants skip the VAT line entirely.
   const { vat, total } = calcOrderTotals(sub, shipping, vatRegistered);
@@ -67,7 +69,7 @@ export function buildWhatsAppUrl(input: WhatsAppOrderInput): string {
   lines.push("");
 
   lines.push(`Subtotal:  ${formatZAR(sub)}`);
-  lines.push(`Shipping:  ${formatZAR(shipping)}`);
+  lines.push(`Delivery:  ${shipping > 0 ? formatZAR(shipping) : "Free"}`);
   lines.push(`*Total:    ${formatZAR(total)}*`);
   if (vatRegistered) {
     lines.push(`(Includes VAT (15%): ${formatZAR(vat)})`);
@@ -97,6 +99,7 @@ export function buildQuickCartUrl(
   items: Array<{ name: string; size: string; qty: number; price: number }>,
   whatsappNumber?: string | null,
   vatRegistered?: boolean,
+  shippingFee?: number,
 ): string {
-  return buildWhatsAppUrl({ items, whatsappNumber, vatRegistered });
+  return buildWhatsAppUrl({ items, whatsappNumber, vatRegistered, shippingFee });
 }

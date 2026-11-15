@@ -167,12 +167,6 @@ function AdminLayout() {
           )}
 
           <div className="rounded-sm border border-border p-3 bg-bg">
-            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">Plan</div>
-            <div className="text-sm font-semibold mt-1">Growth · R599/mo</div>
-            <div className="text-[11px] text-muted mt-0.5">Renews 12 Jun</div>
-          </div>
-
-          <div className="rounded-sm border border-border p-3 bg-bg">
             <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
               Signed in
             </div>

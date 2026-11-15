@@ -20,11 +20,11 @@ function Dashboard() {
   return (
     <div className="p-6 md:p-10 max-w-7xl">
       <h1 className="font-heading text-3xl font-semibold mb-1">Dashboard</h1>
-      <p className="text-muted text-sm mb-8">Last 30 days · all currencies in ZAR</p>
+      <p className="text-muted text-sm mb-8">All time · all currencies in ZAR</p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        <Stat icon={TrendingUp} label="Revenue" value={formatZAR(revenue)} delta="+12.4%" />
-        <Stat icon={ShoppingBag} label="Orders" value={String(orders.length)} delta="+3" />
+        <Stat icon={TrendingUp} label="Revenue" value={formatZAR(revenue)} delta="" />
+        <Stat icon={ShoppingBag} label="Orders" value={String(orders.length)} delta="" />
         <Stat icon={Package} label="Products live" value={String(products.length)} delta="" />
         <Stat icon={AlertTriangle} label="Low stock" value={String(lowStock.length)} delta="needs review" warn />
       </div>

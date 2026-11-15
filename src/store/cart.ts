@@ -63,7 +63,6 @@ export const useCart = create<CartState>()(
   ),
 );
 
-export const SHIPPING_FLAT = 75;
 export const VAT_RATE = 0.15;
 
 /**

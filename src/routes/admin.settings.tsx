@@ -15,6 +15,7 @@ import { useTenant, useTenantId } from "@/store/tenant";
 import { useAuthStore } from "@/store/auth";
 import { startSubscriptionSignup } from "@/lib/billing";
 import { formatZAR } from "@/lib/format";
+import { MIN_PASSWORD_LENGTH, validateNewPassword } from "@/lib/password";
 
 export const Route = createFileRoute("/admin/settings")({
   component: Settings,
@@ -55,7 +56,7 @@ function Settings() {
     <div className="p-6 md:p-10 max-w-3xl space-y-10">
       <header>
         <h1 className="font-heading text-3xl font-semibold">Settings</h1>
-        <p className="text-muted text-sm">Storefront, payments, tax, shipping, team.</p>
+        <p className="text-muted text-sm">Storefront, payments, tax, delivery, team.</p>
       </header>
 
       <BillingCard />
@@ -118,13 +119,9 @@ function Settings() {
         </div>
       </Card>
 
-      <Card title="Shipping zones">
-        <p className="text-sm text-muted">
-          Shipping zone management isn't set up yet — this is a placeholder
-          for a future release. If you need delivery zones and pricing
-          configured now, email hello@youcommerce.co.za.
-        </p>
-      </Card>
+      <DeliveryFeeCard />
+
+      <ChangePasswordCard />
 
       <Card title="Team">
         <p className="text-sm text-muted">
@@ -139,6 +136,125 @@ function Settings() {
 
       <Button onClick={() => toast.success("Settings saved")}>Save settings</Button>
     </div>
+  );
+}
+
+function DeliveryFeeCard() {
+  const tenant = useTenant();
+  const tenantId = useTenantId();
+  const qc = useQueryClient();
+  const saved = tenant?.content?.shipping_fee ?? 0;
+  const [fee, setFee] = useState(String(saved));
+  useEffect(() => {
+    setFee(String(tenant?.content?.shipping_fee ?? 0));
+  }, [tenant?.content?.shipping_fee]);
+
+  const save = useMutation({
+    mutationFn: async (amount: number) => {
+      if (!tenantId) throw new Error("No tenant resolved");
+      const { error } = await supabase
+        .from("tenants")
+        .update({ content: { ...(tenant?.content ?? {}), shipping_fee: amount } })
+        .eq("id", tenantId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tenant"] });
+      toast.success("Delivery fee saved");
+    },
+    onError: (err) => {
+      toast.error("Failed to save", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    },
+  });
+
+  const amount = parseFloat(fee);
+  const valid = Number.isFinite(amount) && amount >= 0;
+
+  return (
+    <Card title="Delivery fee">
+      <div className="space-y-2">
+        <Label htmlFor="delivery-fee">Delivery fee per order (ZAR)</Label>
+        <Input
+          id="delivery-fee"
+          type="number"
+          min="0"
+          step="0.01"
+          value={fee}
+          onChange={(e) => setFee(e.target.value)}
+          className="max-w-[180px]"
+        />
+        <p className="text-xs text-muted">
+          A flat amount added once to every order. Enter 0 for free delivery.
+        </p>
+        <Button
+          type="button"
+          onClick={() => save.mutate(Math.round(amount * 100) / 100)}
+          disabled={!valid || save.isPending}
+        >
+          {save.isPending ? "Saving…" : "Save delivery fee"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function ChangePasswordCard() {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const message = validateNewPassword(password, confirm);
+    if (message) {
+      toast.error(message);
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setBusy(false);
+    if (error) {
+      toast.error("Couldn't change password", { description: error.message });
+      return;
+    }
+    setPassword("");
+    setConfirm("");
+    toast.success("Password changed");
+  };
+
+  return (
+    <Card title="Change password">
+      <form onSubmit={save} className="space-y-3">
+        <div className="space-y-2">
+          <Label htmlFor="settings-new-password">New password</Label>
+          <Input
+            id="settings-new-password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="max-w-[320px]"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="settings-confirm-password">Confirm new password</Label>
+          <Input
+            id="settings-confirm-password"
+            type="password"
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            className="max-w-[320px]"
+          />
+          <p className="text-xs text-muted">At least {MIN_PASSWORD_LENGTH} characters.</p>
+        </div>
+        <Button type="submit" disabled={busy || !password}>
+          {busy ? "Saving…" : "Change password"}
+        </Button>
+      </form>
+    </Card>
   );
 }
 

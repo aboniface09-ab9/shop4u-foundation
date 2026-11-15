@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { useCart, SHIPPING_FLAT, calcOrderTotals } from "@/store/cart";
+import { useCart, calcOrderTotals } from "@/store/cart";
 import { useTenant } from "@/store/tenant";
 import { useCreateOrder } from "@/data/orders";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
@@ -29,7 +29,7 @@ function Checkout() {
   const tenant = useTenant();
   const vatRegistered = tenant?.vat_registered ?? true;
   const sub = subtotal();
-  const shipping = items.length ? SHIPPING_FLAT : 0;
+  const shipping = items.length ? (tenant?.content?.shipping_fee ?? 0) : 0;
   // Listed prices are VAT-inclusive — vat is the extracted portion of the
   // total, never an add-on. Not-VAT-registered tenants get vat = 0.
   const { vat, total } = calcOrderTotals(sub, shipping, vatRegistered);
@@ -115,6 +115,7 @@ function Checkout() {
         shipping: { line1: address, suburb, city, postal, province },
         whatsappNumber: tenant?.whatsapp_number,
         vatRegistered,
+        shippingFee: shipping,
       });
 
       // 3. Clear cart, then open WhatsApp in a new tab.
@@ -218,7 +219,7 @@ function Checkout() {
             </ul>
             <div className="border-t border-border pt-4 space-y-2 text-sm">
               <Row label="Subtotal" value={formatZAR(sub)} />
-              <Row label="Shipping" value={formatZAR(shipping)} />
+              <Row label="Delivery" value={shipping > 0 ? formatZAR(shipping) : "Free"} />
             </div>
             <div className="border-t border-border mt-4 pt-4 flex justify-between">
               <span className="font-heading font-semibold">Total</span>

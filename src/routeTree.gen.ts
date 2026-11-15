@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShopRouteImport } from './routes/shop'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PlatformRouteImport } from './routes/platform'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DevPayfastTestRouteImport } from './routes/dev-payfast-test'
@@ -33,6 +34,11 @@ import { Route as AdminProductsIdRouteImport } from './routes/admin.products.$id
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlatformRoute = PlatformRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/dev-payfast-test': typeof DevPayfastTestRoute
   '/login': typeof LoginRoute
   '/platform': typeof PlatformRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/dev-payfast-test': typeof DevPayfastTestRoute
   '/login': typeof LoginRoute
   '/platform': typeof PlatformRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/dev-payfast-test': typeof DevPayfastTestRoute
   '/login': typeof LoginRoute
   '/platform': typeof PlatformRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/orders': typeof AdminOrdersRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/dev-payfast-test'
     | '/login'
     | '/platform'
+    | '/reset-password'
     | '/shop'
     | '/admin/customers'
     | '/admin/orders'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/dev-payfast-test'
     | '/login'
     | '/platform'
+    | '/reset-password'
     | '/shop'
     | '/admin/customers'
     | '/admin/orders'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/dev-payfast-test'
     | '/login'
     | '/platform'
+    | '/reset-password'
     | '/shop'
     | '/admin/customers'
     | '/admin/orders'
@@ -271,6 +283,7 @@ export interface RootRouteChildren {
   DevPayfastTestRoute: typeof DevPayfastTestRoute
   LoginRoute: typeof LoginRoute
   PlatformRoute: typeof PlatformRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ShopRoute: typeof ShopRoute
   MockGatewayRefRoute: typeof MockGatewayRefRoute
   OrderRefRoute: typeof OrderRefRoute
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       path: '/shop'
       fullPath: '/shop'
       preLoaderRoute: typeof ShopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform': {
@@ -466,6 +486,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevPayfastTestRoute: DevPayfastTestRoute,
   LoginRoute: LoginRoute,
   PlatformRoute: PlatformRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ShopRoute: ShopRoute,
   MockGatewayRefRoute: MockGatewayRefRoute,
   OrderRefRoute: OrderRefRoute,

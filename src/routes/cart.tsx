@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Minus, Plus, X } from "lucide-react";
-import { useCart, SHIPPING_FLAT, calcOrderTotals } from "@/store/cart";
+import { useCart, calcOrderTotals } from "@/store/cart";
 import { useTenant } from "@/store/tenant";
 import { ProductImage } from "@/components/ProductImage";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ function CartPage() {
   const tenant = useTenant();
   const vatRegistered = tenant?.vat_registered ?? true;
   const sub = subtotal();
-  const shipping = items.length ? SHIPPING_FLAT : 0;
+  const shipping = items.length ? (tenant?.content?.shipping_fee ?? 0) : 0;
   const { vat, total } = calcOrderTotals(sub, shipping, vatRegistered);
 
   if (items.length === 0) {
@@ -64,7 +64,7 @@ function CartPage() {
             <h2 className="font-heading text-xl font-semibold mb-4">Summary</h2>
             <dl className="space-y-2 text-sm">
               <Row label="Subtotal" value={formatZAR(sub)} />
-              <Row label="Shipping" value={formatZAR(shipping)} />
+              <Row label="Delivery" value={shipping > 0 ? formatZAR(shipping) : "Free"} />
             </dl>
             <div className="border-t border-border mt-4 pt-4 flex justify-between">
               <span className="font-heading font-semibold">Total</span>

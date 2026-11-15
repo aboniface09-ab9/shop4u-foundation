@@ -66,6 +66,9 @@ export type TenantContent = {
   // product (the old behaviour) rather than an arbitrary auto-pick, so a
   // merchant who's never touched this setting sees no surprise changes.
   hero_product_slugs?: string[];
+  // Flat delivery fee in rand charged once per order (Admin → Settings →
+  // Delivery). Unset or 0 means no delivery charge.
+  shipping_fee?: number;
   studio_headline?: string;
   studio_body?: string;
 };

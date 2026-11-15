@@ -94,7 +94,7 @@ export function CartDrawer() {
               <span className="font-mono font-semibold">{formatZAR(subtotal())}</span>
             </div>
             <p className="text-xs text-muted">
-              {tenant?.vat_registered ?? true ? "Price includes VAT. " : ""}Shipping added at checkout.
+              {tenant?.vat_registered ?? true ? "Price includes VAT. " : ""}{(tenant?.content?.shipping_fee ?? 0) > 0 ? "Delivery added at checkout." : "Free delivery."}
             </p>
             {/* Primary CTA — full checkout form, saves order to Supabase.
                 checkout.tsx offers both "Pay by card" and "Place order via
@@ -110,6 +110,7 @@ export function CartDrawer() {
                   items.map((i) => ({ name: i.name, size: i.size, qty: i.qty, price: i.price })),
                   tenant?.whatsapp_number,
                   tenant?.vat_registered ?? true,
+                  tenant?.content?.shipping_fee ?? 0,
                 );
                 window.open(url, "_blank", "noopener,noreferrer");
               }}
