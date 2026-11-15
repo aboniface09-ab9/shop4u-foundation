@@ -21,6 +21,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
+import { Route as PlatformSettingsRouteImport } from './routes/platform.settings'
+import { Route as PlatformPriceListRouteImport } from './routes/platform.price-list'
 import { Route as PlatformMerchantsRouteImport } from './routes/platform.merchants'
 import { Route as OrderRefRouteImport } from './routes/order.$ref'
 import { Route as MockGatewayRefRouteImport } from './routes/mock-gateway.$ref'
@@ -29,8 +31,11 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
+import { Route as PlatformQuotesIndexRouteImport } from './routes/platform.quotes.index'
 import { Route as PlatformClientsIndexRouteImport } from './routes/platform.clients.index'
 import { Route as AdminProductsIndexRouteImport } from './routes/admin.products.index'
+import { Route as PlatformQuotesNewRouteImport } from './routes/platform.quotes.new'
+import { Route as PlatformQuotesIdRouteImport } from './routes/platform.quotes.$id'
 import { Route as PlatformProjectsIdRouteImport } from './routes/platform.projects.$id'
 import { Route as PlatformClientsNewRouteImport } from './routes/platform.clients.new'
 import { Route as PlatformClientsIdRouteImport } from './routes/platform.clients.$id'
@@ -97,6 +102,16 @@ const ProductIdRoute = ProductIdRouteImport.update({
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformSettingsRoute = PlatformSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformPriceListRoute = PlatformPriceListRouteImport.update({
+  id: '/price-list',
+  path: '/price-list',
+  getParentRoute: () => PlatformRoute,
+} as any)
 const PlatformMerchantsRoute = PlatformMerchantsRouteImport.update({
   id: '/merchants',
   path: '/merchants',
@@ -137,6 +152,11 @@ const AdminCustomersRoute = AdminCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AdminRoute,
 } as any)
+const PlatformQuotesIndexRoute = PlatformQuotesIndexRouteImport.update({
+  id: '/quotes/',
+  path: '/quotes/',
+  getParentRoute: () => PlatformRoute,
+} as any)
 const PlatformClientsIndexRoute = PlatformClientsIndexRouteImport.update({
   id: '/clients/',
   path: '/clients/',
@@ -146,6 +166,16 @@ const AdminProductsIndexRoute = AdminProductsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminProductsRoute,
+} as any)
+const PlatformQuotesNewRoute = PlatformQuotesNewRouteImport.update({
+  id: '/quotes/new',
+  path: '/quotes/new',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformQuotesIdRoute = PlatformQuotesIdRouteImport.update({
+  id: '/quotes/$id',
+  path: '/quotes/$id',
+  getParentRoute: () => PlatformRoute,
 } as any)
 const PlatformProjectsIdRoute = PlatformProjectsIdRouteImport.update({
   id: '/projects/$id',
@@ -191,6 +221,8 @@ export interface FileRoutesByFullPath {
   '/mock-gateway/$ref': typeof MockGatewayRefRoute
   '/order/$ref': typeof OrderRefRoute
   '/platform/merchants': typeof PlatformMerchantsRoute
+  '/platform/price-list': typeof PlatformPriceListRoute
+  '/platform/settings': typeof PlatformSettingsRoute
   '/product/$id': typeof ProductIdRoute
   '/admin/': typeof AdminIndexRoute
   '/platform/': typeof PlatformIndexRoute
@@ -199,8 +231,11 @@ export interface FileRoutesByFullPath {
   '/platform/clients/$id': typeof PlatformClientsIdRoute
   '/platform/clients/new': typeof PlatformClientsNewRoute
   '/platform/projects/$id': typeof PlatformProjectsIdRoute
+  '/platform/quotes/$id': typeof PlatformQuotesIdRoute
+  '/platform/quotes/new': typeof PlatformQuotesNewRoute
   '/admin/products/': typeof AdminProductsIndexRoute
   '/platform/clients/': typeof PlatformClientsIndexRoute
+  '/platform/quotes/': typeof PlatformQuotesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -217,6 +252,8 @@ export interface FileRoutesByTo {
   '/mock-gateway/$ref': typeof MockGatewayRefRoute
   '/order/$ref': typeof OrderRefRoute
   '/platform/merchants': typeof PlatformMerchantsRoute
+  '/platform/price-list': typeof PlatformPriceListRoute
+  '/platform/settings': typeof PlatformSettingsRoute
   '/product/$id': typeof ProductIdRoute
   '/admin': typeof AdminIndexRoute
   '/platform': typeof PlatformIndexRoute
@@ -225,8 +262,11 @@ export interface FileRoutesByTo {
   '/platform/clients/$id': typeof PlatformClientsIdRoute
   '/platform/clients/new': typeof PlatformClientsNewRoute
   '/platform/projects/$id': typeof PlatformProjectsIdRoute
+  '/platform/quotes/$id': typeof PlatformQuotesIdRoute
+  '/platform/quotes/new': typeof PlatformQuotesNewRoute
   '/admin/products': typeof AdminProductsIndexRoute
   '/platform/clients': typeof PlatformClientsIndexRoute
+  '/platform/quotes': typeof PlatformQuotesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -247,6 +287,8 @@ export interface FileRoutesById {
   '/mock-gateway/$ref': typeof MockGatewayRefRoute
   '/order/$ref': typeof OrderRefRoute
   '/platform/merchants': typeof PlatformMerchantsRoute
+  '/platform/price-list': typeof PlatformPriceListRoute
+  '/platform/settings': typeof PlatformSettingsRoute
   '/product/$id': typeof ProductIdRoute
   '/admin/': typeof AdminIndexRoute
   '/platform/': typeof PlatformIndexRoute
@@ -255,8 +297,11 @@ export interface FileRoutesById {
   '/platform/clients/$id': typeof PlatformClientsIdRoute
   '/platform/clients/new': typeof PlatformClientsNewRoute
   '/platform/projects/$id': typeof PlatformProjectsIdRoute
+  '/platform/quotes/$id': typeof PlatformQuotesIdRoute
+  '/platform/quotes/new': typeof PlatformQuotesNewRoute
   '/admin/products/': typeof AdminProductsIndexRoute
   '/platform/clients/': typeof PlatformClientsIndexRoute
+  '/platform/quotes/': typeof PlatformQuotesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -278,6 +323,8 @@ export interface FileRouteTypes {
     | '/mock-gateway/$ref'
     | '/order/$ref'
     | '/platform/merchants'
+    | '/platform/price-list'
+    | '/platform/settings'
     | '/product/$id'
     | '/admin/'
     | '/platform/'
@@ -286,8 +333,11 @@ export interface FileRouteTypes {
     | '/platform/clients/$id'
     | '/platform/clients/new'
     | '/platform/projects/$id'
+    | '/platform/quotes/$id'
+    | '/platform/quotes/new'
     | '/admin/products/'
     | '/platform/clients/'
+    | '/platform/quotes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -304,6 +354,8 @@ export interface FileRouteTypes {
     | '/mock-gateway/$ref'
     | '/order/$ref'
     | '/platform/merchants'
+    | '/platform/price-list'
+    | '/platform/settings'
     | '/product/$id'
     | '/admin'
     | '/platform'
@@ -312,8 +364,11 @@ export interface FileRouteTypes {
     | '/platform/clients/$id'
     | '/platform/clients/new'
     | '/platform/projects/$id'
+    | '/platform/quotes/$id'
+    | '/platform/quotes/new'
     | '/admin/products'
     | '/platform/clients'
+    | '/platform/quotes'
   id:
     | '__root__'
     | '/'
@@ -333,6 +388,8 @@ export interface FileRouteTypes {
     | '/mock-gateway/$ref'
     | '/order/$ref'
     | '/platform/merchants'
+    | '/platform/price-list'
+    | '/platform/settings'
     | '/product/$id'
     | '/admin/'
     | '/platform/'
@@ -341,8 +398,11 @@ export interface FileRouteTypes {
     | '/platform/clients/$id'
     | '/platform/clients/new'
     | '/platform/projects/$id'
+    | '/platform/quotes/$id'
+    | '/platform/quotes/new'
     | '/admin/products/'
     | '/platform/clients/'
+    | '/platform/quotes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -446,6 +506,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/settings': {
+      id: '/platform/settings'
+      path: '/settings'
+      fullPath: '/platform/settings'
+      preLoaderRoute: typeof PlatformSettingsRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/price-list': {
+      id: '/platform/price-list'
+      path: '/price-list'
+      fullPath: '/platform/price-list'
+      preLoaderRoute: typeof PlatformPriceListRouteImport
+      parentRoute: typeof PlatformRoute
+    }
     '/platform/merchants': {
       id: '/platform/merchants'
       path: '/merchants'
@@ -502,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCustomersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/platform/quotes/': {
+      id: '/platform/quotes/'
+      path: '/quotes'
+      fullPath: '/platform/quotes/'
+      preLoaderRoute: typeof PlatformQuotesIndexRouteImport
+      parentRoute: typeof PlatformRoute
+    }
     '/platform/clients/': {
       id: '/platform/clients/'
       path: '/clients'
@@ -515,6 +596,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/products/'
       preLoaderRoute: typeof AdminProductsIndexRouteImport
       parentRoute: typeof AdminProductsRoute
+    }
+    '/platform/quotes/new': {
+      id: '/platform/quotes/new'
+      path: '/quotes/new'
+      fullPath: '/platform/quotes/new'
+      preLoaderRoute: typeof PlatformQuotesNewRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/quotes/$id': {
+      id: '/platform/quotes/$id'
+      path: '/quotes/$id'
+      fullPath: '/platform/quotes/$id'
+      preLoaderRoute: typeof PlatformQuotesIdRouteImport
+      parentRoute: typeof PlatformRoute
     }
     '/platform/projects/$id': {
       id: '/platform/projects/$id'
@@ -592,20 +687,30 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface PlatformRouteChildren {
   PlatformMerchantsRoute: typeof PlatformMerchantsRoute
+  PlatformPriceListRoute: typeof PlatformPriceListRoute
+  PlatformSettingsRoute: typeof PlatformSettingsRoute
   PlatformIndexRoute: typeof PlatformIndexRoute
   PlatformClientsIdRoute: typeof PlatformClientsIdRoute
   PlatformClientsNewRoute: typeof PlatformClientsNewRoute
   PlatformProjectsIdRoute: typeof PlatformProjectsIdRoute
+  PlatformQuotesIdRoute: typeof PlatformQuotesIdRoute
+  PlatformQuotesNewRoute: typeof PlatformQuotesNewRoute
   PlatformClientsIndexRoute: typeof PlatformClientsIndexRoute
+  PlatformQuotesIndexRoute: typeof PlatformQuotesIndexRoute
 }
 
 const PlatformRouteChildren: PlatformRouteChildren = {
   PlatformMerchantsRoute: PlatformMerchantsRoute,
+  PlatformPriceListRoute: PlatformPriceListRoute,
+  PlatformSettingsRoute: PlatformSettingsRoute,
   PlatformIndexRoute: PlatformIndexRoute,
   PlatformClientsIdRoute: PlatformClientsIdRoute,
   PlatformClientsNewRoute: PlatformClientsNewRoute,
   PlatformProjectsIdRoute: PlatformProjectsIdRoute,
+  PlatformQuotesIdRoute: PlatformQuotesIdRoute,
+  PlatformQuotesNewRoute: PlatformQuotesNewRoute,
   PlatformClientsIndexRoute: PlatformClientsIndexRoute,
+  PlatformQuotesIndexRoute: PlatformQuotesIndexRoute,
 }
 
 const PlatformRouteWithChildren = PlatformRoute._addFileChildren(
