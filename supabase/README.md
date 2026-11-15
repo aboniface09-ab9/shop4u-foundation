@@ -24,3 +24,8 @@ the two storage buckets, and the security hardening migration applied. `tests/se
 Before hardening, the same checks showed a merchant could set their own plan/billing_state and link themselves to another tenant.
 Not loaded on dev: real merchant seed data, onboarding_submissions, and whatever anonymous-checkout policy exists on the live
 orders table (not in the repo; dump it from production before testing storefront checkout on dev).
+
+## Dev test login
+The dev project has a fictional platform admin `dev-admin@example.com` (and fictional "Example Seafood Co" data) for UI checks.
+Delete both before the dev project is ever used for anything else. Run the app against it with the `portal-dev-db`
+launch config (port 8081); it uses the project's public key only.

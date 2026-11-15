@@ -29,7 +29,11 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
+import { Route as PlatformClientsIndexRouteImport } from './routes/platform.clients.index'
 import { Route as AdminProductsIndexRouteImport } from './routes/admin.products.index'
+import { Route as PlatformProjectsIdRouteImport } from './routes/platform.projects.$id'
+import { Route as PlatformClientsNewRouteImport } from './routes/platform.clients.new'
+import { Route as PlatformClientsIdRouteImport } from './routes/platform.clients.$id'
 import { Route as AdminProductsNewRouteImport } from './routes/admin.products.new'
 import { Route as AdminProductsIdRouteImport } from './routes/admin.products.$id'
 
@@ -133,10 +137,30 @@ const AdminCustomersRoute = AdminCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AdminRoute,
 } as any)
+const PlatformClientsIndexRoute = PlatformClientsIndexRouteImport.update({
+  id: '/clients/',
+  path: '/clients/',
+  getParentRoute: () => PlatformRoute,
+} as any)
 const AdminProductsIndexRoute = AdminProductsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminProductsRoute,
+} as any)
+const PlatformProjectsIdRoute = PlatformProjectsIdRouteImport.update({
+  id: '/projects/$id',
+  path: '/projects/$id',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformClientsNewRoute = PlatformClientsNewRouteImport.update({
+  id: '/clients/new',
+  path: '/clients/new',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformClientsIdRoute = PlatformClientsIdRouteImport.update({
+  id: '/clients/$id',
+  path: '/clients/$id',
+  getParentRoute: () => PlatformRoute,
 } as any)
 const AdminProductsNewRoute = AdminProductsNewRouteImport.update({
   id: '/new',
@@ -172,7 +196,11 @@ export interface FileRoutesByFullPath {
   '/platform/': typeof PlatformIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
+  '/platform/clients/$id': typeof PlatformClientsIdRoute
+  '/platform/clients/new': typeof PlatformClientsNewRoute
+  '/platform/projects/$id': typeof PlatformProjectsIdRoute
   '/admin/products/': typeof AdminProductsIndexRoute
+  '/platform/clients/': typeof PlatformClientsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -194,7 +222,11 @@ export interface FileRoutesByTo {
   '/platform': typeof PlatformIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
+  '/platform/clients/$id': typeof PlatformClientsIdRoute
+  '/platform/clients/new': typeof PlatformClientsNewRoute
+  '/platform/projects/$id': typeof PlatformProjectsIdRoute
   '/admin/products': typeof AdminProductsIndexRoute
+  '/platform/clients': typeof PlatformClientsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -220,7 +252,11 @@ export interface FileRoutesById {
   '/platform/': typeof PlatformIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
+  '/platform/clients/$id': typeof PlatformClientsIdRoute
+  '/platform/clients/new': typeof PlatformClientsNewRoute
+  '/platform/projects/$id': typeof PlatformProjectsIdRoute
   '/admin/products/': typeof AdminProductsIndexRoute
+  '/platform/clients/': typeof PlatformClientsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -247,7 +283,11 @@ export interface FileRouteTypes {
     | '/platform/'
     | '/admin/products/$id'
     | '/admin/products/new'
+    | '/platform/clients/$id'
+    | '/platform/clients/new'
+    | '/platform/projects/$id'
     | '/admin/products/'
+    | '/platform/clients/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -269,7 +309,11 @@ export interface FileRouteTypes {
     | '/platform'
     | '/admin/products/$id'
     | '/admin/products/new'
+    | '/platform/clients/$id'
+    | '/platform/clients/new'
+    | '/platform/projects/$id'
     | '/admin/products'
+    | '/platform/clients'
   id:
     | '__root__'
     | '/'
@@ -294,7 +338,11 @@ export interface FileRouteTypes {
     | '/platform/'
     | '/admin/products/$id'
     | '/admin/products/new'
+    | '/platform/clients/$id'
+    | '/platform/clients/new'
+    | '/platform/projects/$id'
     | '/admin/products/'
+    | '/platform/clients/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -454,12 +502,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCustomersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/platform/clients/': {
+      id: '/platform/clients/'
+      path: '/clients'
+      fullPath: '/platform/clients/'
+      preLoaderRoute: typeof PlatformClientsIndexRouteImport
+      parentRoute: typeof PlatformRoute
+    }
     '/admin/products/': {
       id: '/admin/products/'
       path: '/'
       fullPath: '/admin/products/'
       preLoaderRoute: typeof AdminProductsIndexRouteImport
       parentRoute: typeof AdminProductsRoute
+    }
+    '/platform/projects/$id': {
+      id: '/platform/projects/$id'
+      path: '/projects/$id'
+      fullPath: '/platform/projects/$id'
+      preLoaderRoute: typeof PlatformProjectsIdRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/clients/new': {
+      id: '/platform/clients/new'
+      path: '/clients/new'
+      fullPath: '/platform/clients/new'
+      preLoaderRoute: typeof PlatformClientsNewRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/clients/$id': {
+      id: '/platform/clients/$id'
+      path: '/clients/$id'
+      fullPath: '/platform/clients/$id'
+      preLoaderRoute: typeof PlatformClientsIdRouteImport
+      parentRoute: typeof PlatformRoute
     }
     '/admin/products/new': {
       id: '/admin/products/new'
@@ -517,11 +593,19 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 interface PlatformRouteChildren {
   PlatformMerchantsRoute: typeof PlatformMerchantsRoute
   PlatformIndexRoute: typeof PlatformIndexRoute
+  PlatformClientsIdRoute: typeof PlatformClientsIdRoute
+  PlatformClientsNewRoute: typeof PlatformClientsNewRoute
+  PlatformProjectsIdRoute: typeof PlatformProjectsIdRoute
+  PlatformClientsIndexRoute: typeof PlatformClientsIndexRoute
 }
 
 const PlatformRouteChildren: PlatformRouteChildren = {
   PlatformMerchantsRoute: PlatformMerchantsRoute,
   PlatformIndexRoute: PlatformIndexRoute,
+  PlatformClientsIdRoute: PlatformClientsIdRoute,
+  PlatformClientsNewRoute: PlatformClientsNewRoute,
+  PlatformProjectsIdRoute: PlatformProjectsIdRoute,
+  PlatformClientsIndexRoute: PlatformClientsIndexRoute,
 }
 
 const PlatformRouteWithChildren = PlatformRoute._addFileChildren(

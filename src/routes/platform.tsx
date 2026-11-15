@@ -19,7 +19,10 @@ export const Route = createFileRoute("/platform")({
 });
 
 // Add an entry here as each section is built (clients, quotes, invoices…).
-const NAV: { to: string; label: string }[] = [{ to: "/platform/merchants", label: "Merchants" }];
+const NAV: { to: string; label: string }[] = [
+  { to: "/platform/clients", label: "Clients" },
+  { to: "/platform/merchants", label: "Merchants" },
+];
 
 function PlatformLayout() {
   const isAuthed = useIsAuthenticated();
