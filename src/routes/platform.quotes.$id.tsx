@@ -11,6 +11,7 @@ import {
   zodFieldErrors,
   type FieldErrors,
 } from "@/components/platform/form-utils";
+import { PriceItemPicker } from "@/components/platform/PriceItemPicker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import { useActivity, useClient, useContacts } from "@/data/clients";
 import { KIND_LABEL, useInvoicesForQuote } from "@/data/invoices";
 import {
   useAddLine,
+  useAddLines,
   useDeleteLine,
   useDeleteQuote,
   usePriceList,
@@ -95,9 +97,10 @@ function LinesPanel({
   locked: boolean;
 }) {
   const { data: priceList = [] } = usePriceList();
-  const add = useAddLine(quote.id);
-  const [pickId, setPickId] = useState("");
-  const active = priceList.filter((p) => p.active);
+  const addMany = useAddLines(quote.id);
+  const alreadyOnQuote = new Set(
+    lines.map((l) => l.price_item_id).filter((id): id is string => !!id),
+  );
 
   const sections = [
     { kind: "once_off" as const, title: "Once-off build" },
@@ -127,51 +130,23 @@ function LinesPanel({
 
       {!locked && (
         <div className="mt-6 space-y-6 border-t border-border pt-6">
-          <form
-            className="flex flex-col gap-3 sm:flex-row sm:items-end"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const item = active.find((p) => p.id === pickId);
-              if (!item) return toast.error("Choose an item first");
-              add.mutate(
-                {
-                  kind: item.kind,
-                  name: item.name,
-                  description: item.description,
-                  quantity: 1,
-                  unit_price_cents: item.unit_price_cents,
-                  price_item_id: item.id,
-                  sort_order: item.sort_order,
-                },
-                {
-                  onSuccess: () => setPickId(""),
-                  onError: (err) => toast.error("Couldn't add", { description: err.message }),
-                },
-              );
-            }}
-          >
-            <div className="flex-1">
-              <Field label="Add from price list" name="pick">
-                <select
-                  id="pick"
-                  className={selectClass}
-                  value={pickId}
-                  onChange={(e) => setPickId(e.target.value)}
-                >
-                  <option value="">Choose an item…</option>
-                  {active.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} · {formatCents(p.unit_price_cents)}{" "}
-                      {p.kind === "monthly" ? "/mo" : ""}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-            <Button type="submit" variant="outline" disabled={add.isPending}>
-              Add
-            </Button>
-          </form>
+          <PriceItemPicker
+            items={priceList}
+            alreadyOnQuote={alreadyOnQuote}
+            busy={addMany.isPending}
+            onAdd={(newLines) =>
+              addMany
+                .mutateAsync(newLines)
+                .then(() => {
+                  toast.success(`${newLines.length} item${newLines.length === 1 ? "" : "s"} added`);
+                  return true;
+                })
+                .catch((err: Error) => {
+                  toast.error("Couldn't add the items", { description: err.message });
+                  return false;
+                })
+            }
+          />
           <CustomLineForm quoteId={quote.id} />
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/lib/supabase";
+import type { NewQuoteLine } from "@/lib/quote-lines";
 import type {
   BusinessSettingsInput,
   LineKind,
@@ -273,6 +274,21 @@ export function useAddLine(quoteId: string) {
       input: QuoteLineInput & { price_item_id?: string | null; sort_order?: number },
     ) => {
       const { error } = await supabase.from("quote_lines").insert({ ...input, quote_id: quoteId });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["quotes", quoteId] }),
+  });
+}
+
+/** Adds several lines in ONE request, so a multi-select either fully works or adds nothing. */
+export function useAddLines(quoteId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (lines: NewQuoteLine[]) => {
+      if (lines.length === 0) return;
+      const { error } = await supabase
+        .from("quote_lines")
+        .insert(lines.map((l) => ({ ...l, quote_id: quoteId })));
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["quotes", quoteId] }),
