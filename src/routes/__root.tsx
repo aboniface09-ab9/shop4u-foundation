@@ -128,7 +128,9 @@ function AppShell() {
   // — not a merchant storefront or a per-tenant /admin console, so it gets
   // the same treatment as /admin here: no storefront chrome, and tenant
   // resolution shouldn't bother with the hostname-resolved slug for it.
-  const isAdmin = pathname.startsWith("/admin") || pathname.startsWith("/platform");
+  // /q/:token is a client's private quote page: also no storefront chrome.
+  const isAdmin =
+    pathname.startsWith("/admin") || pathname.startsWith("/platform") || pathname.startsWith("/q/");
 
   // Hydrate auth state from existing session, subscribe to changes.
   useAuthBootstrap();

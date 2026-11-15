@@ -38,7 +38,48 @@ export type QuoteRow = {
   intro: string;
   terms: string;
   created_at: string;
+  sent_at: string | null;
+  sent_to_email: string | null;
+  viewed_at: string | null;
+  accepted_at: string | null;
+  accepted_name: string | null;
 };
+
+export type SendQuoteResult = {
+  ok: boolean;
+  emailed?: boolean;
+  dryRun?: boolean;
+  link?: string;
+  reason?: string;
+};
+
+/**
+ * Sends (or re-sends, issuing a NEW link) a quote via the Worker endpoint, which locks the quote,
+ * emails the client the private link plus PDF, and returns the link. Resolves with the Worker's
+ * JSON even on a partial failure (quote locked but email failed) so the page can show the link.
+ */
+export function useSendQuote(quoteId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (toEmail: string): Promise<SendQuoteResult> => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("You are signed out. Sign in again.");
+      const res = await fetch("/api/platform/quotes/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ quoteId, toEmail }),
+      });
+      const body = (await res.json().catch(() => ({}))) as SendQuoteResult;
+      if (!res.ok && !body.link) throw new Error(body.reason ?? `Send failed (${res.status})`);
+      return { ...body, ok: res.ok && body.ok === true };
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["quotes"] });
+      qc.invalidateQueries({ queryKey: ["activity", quoteId] });
+    },
+  });
+}
 
 export type QuoteLineRow = {
   id: string;

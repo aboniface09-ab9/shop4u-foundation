@@ -15,13 +15,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useClient } from "@/data/clients";
+import { useActivity, useClient, useContacts } from "@/data/clients";
 import {
   useAddLine,
   useDeleteLine,
   useDeleteQuote,
   usePriceList,
   useQuote,
+  useSendQuote,
   useUpdateLine,
   useUpdateQuote,
   type QuoteLineRow,
@@ -75,6 +76,8 @@ function QuoteBuilder() {
       <LinesPanel quote={quote} lines={lines} locked={locked} />
       <TotalsPanel quote={quote} lines={lines} />
       <SettingsPanel quote={quote} locked={locked} />
+      <SendPanel quote={quote} lineCount={lines.length} />
+      <QuoteActivity quoteId={quote.id} />
       {!locked && <DeleteDraft quoteId={quote.id} />}
     </div>
   );
@@ -449,6 +452,139 @@ function SettingsPanel({ quote, locked }: { quote: QuoteRow; locked: boolean }) 
           )}
         </fieldset>
       </form>
+    </Panel>
+  );
+}
+
+const fmtWhen = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleString("en-ZA", { dateStyle: "medium", timeStyle: "short" }) : "—";
+
+function SendPanel({ quote, lineCount }: { quote: QuoteRow; lineCount: number }) {
+  const { data: contacts = [] } = useContacts(quote.client_id);
+  const send = useSendQuote(quote.id);
+  const withEmail = contacts.filter((c) => c.email);
+  const [recipient, setRecipient] = useState("");
+  const [link, setLink] = useState<string | null>(null);
+  const chosen =
+    recipient || withEmail.find((c) => c.is_primary)?.email || withEmail[0]?.email || "";
+
+  const resend = quote.status === "sent" || quote.status === "viewed";
+  const canSend = quote.status === "draft" || resend;
+
+  const submit = () => {
+    if (!chosen) return;
+    const warning = resend
+      ? "Re-send issues a NEW link and the old link stops working. Continue?"
+      : `Send ${quote.number} to ${chosen}? The quote will be locked and can't be edited afterwards.`;
+    if (!window.confirm(warning)) return;
+    send.mutate(chosen, {
+      onSuccess: (r) => {
+        if (r.link) setLink(r.link);
+        if (r.ok && r.emailed) toast.success("Quote emailed to the client");
+        else if (r.ok && r.dryRun)
+          toast.success("Dry run: quote locked and link created, no email sent");
+        else
+          toast.error(r.reason ?? "Email failed", {
+            description: r.link ? "The link is shown below." : undefined,
+          });
+      },
+      onError: (err) => toast.error("Couldn't send", { description: err.message }),
+    });
+  };
+
+  return (
+    <Panel title="Send to client">
+      <dl className="mb-4 grid gap-1 text-sm sm:grid-cols-2">
+        <div className="flex justify-between gap-3">
+          <dt className="text-muted">Status</dt>
+          <dd className="capitalize">{quote.status}</dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-muted">Sent</dt>
+          <dd>
+            {fmtWhen(quote.sent_at)}
+            {quote.sent_to_email ? ` to ${quote.sent_to_email}` : ""}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-muted">First viewed</dt>
+          <dd>{fmtWhen(quote.viewed_at)}</dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-muted">Accepted</dt>
+          <dd>
+            {quote.accepted_at ? `${quote.accepted_name} on ${fmtWhen(quote.accepted_at)}` : "—"}
+          </dd>
+        </div>
+      </dl>
+
+      {canSend ? (
+        <div className="space-y-3">
+          {withEmail.length === 0 ? (
+            <p className="text-sm text-danger">
+              Add a contact with an email address to the client first. The link can only be sent to
+              a contact on file.
+            </p>
+          ) : (
+            <Field label="Send to" name="recipient">
+              <select
+                id="recipient"
+                className={selectClass}
+                value={chosen}
+                onChange={(e) => setRecipient(e.target.value)}
+              >
+                {withEmail.map((c) => (
+                  <option key={c.id} value={c.email ?? ""}>
+                    {c.name} ({c.email}){c.is_primary ? " · primary" : ""}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {lineCount === 0 && (
+            <p className="text-sm text-danger">Add at least one line item first.</p>
+          )}
+          <Button onClick={submit} disabled={send.isPending || !chosen || lineCount === 0}>
+            {send.isPending ? "Sending…" : resend ? "Re-send with a new link" : "Send quote"}
+          </Button>
+        </div>
+      ) : (
+        <p className="text-sm text-muted">This quote can no longer be sent.</p>
+      )}
+
+      {link && (
+        <div className="mt-4 rounded-md border border-border bg-bg p-3">
+          <p className="mb-1 text-xs text-muted">
+            Private link (anyone with it can view and accept this quote):
+          </p>
+          <input
+            readOnly
+            value={link}
+            onFocus={(e) => e.currentTarget.select()}
+            className="w-full bg-transparent font-mono text-xs"
+            aria-label="Private quote link"
+          />
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+function QuoteActivity({ quoteId }: { quoteId: string }) {
+  const { data: rows = [] } = useActivity(quoteId);
+  return (
+    <Panel title="Activity">
+      <ul className="space-y-1 text-sm">
+        {rows.length === 0 && <li className="text-muted">Nothing yet.</li>}
+        {rows.map((r) => (
+          <li key={r.id} className="flex justify-between gap-3">
+            <span>{r.event.replace(/_/g, " ")}</span>
+            <span className="font-mono text-xs text-muted">
+              {new Date(r.created_at).toLocaleString("en-ZA")}
+            </span>
+          </li>
+        ))}
+      </ul>
     </Panel>
   );
 }

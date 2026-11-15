@@ -12,6 +12,29 @@ import {
   type PayfastWorkerEnv,
 } from "./server/payfast/handlers";
 import { runDailyBillingCron, type BillingCronEnv } from "./server/billing/cron";
+import { handleQuotePdf, handleSendQuote, type QuotesWorkerEnv } from "./server/quotes/handlers";
+
+/** Quote routes: admin send, and the client's private PDF. See src/server/quotes/handlers.ts. */
+async function tryHandleQuoteRoute(request: Request, env: QuotesWorkerEnv): Promise<Response | undefined> {
+  const { pathname } = new URL(request.url);
+  if (request.method === "POST" && pathname === "/api/platform/quotes/send") {
+    return handleSendQuote(request, env);
+  }
+  const pdfMatch = /^\/api\/q\/([^/]+)\/pdf$/.exec(pathname);
+  if (request.method === "GET" && pdfMatch) {
+    return handleQuotePdf(request, pdfMatch[1]);
+  }
+  return undefined;
+}
+
+/** Private client pages must never be cached, indexed or leak their URL as a referrer. */
+function withPrivatePageHeaders(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set("cache-control", "no-store");
+  headers.set("referrer-policy", "no-referrer");
+  headers.set("x-robots-tag", "noindex, nofollow");
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -126,6 +149,9 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const quoteResponse = await tryHandleQuoteRoute(request, (env ?? {}) as QuotesWorkerEnv);
+      if (quoteResponse) return quoteResponse;
+
       const paymentResponse = await tryHandlePaymentRoute(
         request,
         (env ?? {}) as PayfastWorkerEnv,
@@ -134,7 +160,8 @@ export default {
 
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const normalized = await normalizeCatastrophicSsrResponse(response);
+      return new URL(request.url).pathname.startsWith("/q/") ? withPrivatePageHeaders(normalized) : normalized;
     } catch (error) {
       console.error(error);
       return brandedErrorResponse();

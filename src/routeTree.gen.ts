@@ -20,6 +20,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as QTokenRouteImport } from './routes/q.$token'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as PlatformSettingsRouteImport } from './routes/platform.settings'
 import { Route as PlatformPriceListRouteImport } from './routes/platform.price-list'
@@ -96,6 +97,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const QTokenRoute = QTokenRouteImport.update({
+  id: '/q/$token',
+  path: '/q/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ProductIdRoute = ProductIdRouteImport.update({
   id: '/product/$id',
@@ -224,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/platform/price-list': typeof PlatformPriceListRoute
   '/platform/settings': typeof PlatformSettingsRoute
   '/product/$id': typeof ProductIdRoute
+  '/q/$token': typeof QTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/platform/': typeof PlatformIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/platform/price-list': typeof PlatformPriceListRoute
   '/platform/settings': typeof PlatformSettingsRoute
   '/product/$id': typeof ProductIdRoute
+  '/q/$token': typeof QTokenRoute
   '/admin': typeof AdminIndexRoute
   '/platform': typeof PlatformIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
@@ -290,6 +298,7 @@ export interface FileRoutesById {
   '/platform/price-list': typeof PlatformPriceListRoute
   '/platform/settings': typeof PlatformSettingsRoute
   '/product/$id': typeof ProductIdRoute
+  '/q/$token': typeof QTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/platform/': typeof PlatformIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
@@ -326,6 +335,7 @@ export interface FileRouteTypes {
     | '/platform/price-list'
     | '/platform/settings'
     | '/product/$id'
+    | '/q/$token'
     | '/admin/'
     | '/platform/'
     | '/admin/products/$id'
@@ -357,6 +367,7 @@ export interface FileRouteTypes {
     | '/platform/price-list'
     | '/platform/settings'
     | '/product/$id'
+    | '/q/$token'
     | '/admin'
     | '/platform'
     | '/admin/products/$id'
@@ -391,6 +402,7 @@ export interface FileRouteTypes {
     | '/platform/price-list'
     | '/platform/settings'
     | '/product/$id'
+    | '/q/$token'
     | '/admin/'
     | '/platform/'
     | '/admin/products/$id'
@@ -418,6 +430,7 @@ export interface RootRouteChildren {
   MockGatewayRefRoute: typeof MockGatewayRefRoute
   OrderRefRoute: typeof OrderRefRoute
   ProductIdRoute: typeof ProductIdRoute
+  QTokenRoute: typeof QTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -498,6 +511,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/q/$token': {
+      id: '/q/$token'
+      path: '/q/$token'
+      fullPath: '/q/$token'
+      preLoaderRoute: typeof QTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/product/$id': {
       id: '/product/$id'
@@ -730,6 +750,7 @@ const rootRouteChildren: RootRouteChildren = {
   MockGatewayRefRoute: MockGatewayRefRoute,
   OrderRefRoute: OrderRefRoute,
   ProductIdRoute: ProductIdRoute,
+  QTokenRoute: QTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -22,7 +22,22 @@ export type SendTransactionalEmailInput = {
   to: { email: string; name?: string };
   subject: string;
   htmlContent: string;
+  /** Optional attachments; `contentBase64` is the file bytes, base64-encoded (Brevo's `content`). */
+  attachments?: { name: string; contentBase64: string }[];
 };
+
+/** The JSON body sent to Brevo. Exported so the payload shape can be unit tested without a network call. */
+export function buildBrevoPayload(env: BrevoEmailEnv, input: SendTransactionalEmailInput) {
+  return {
+    sender: { email: env.BREVO_SENDER_EMAIL, name: env.BREVO_SENDER_NAME ?? "YouCommerce" },
+    to: [input.to],
+    subject: input.subject,
+    htmlContent: input.htmlContent,
+    ...(input.attachments?.length
+      ? { attachment: input.attachments.map((a) => ({ name: a.name, content: a.contentBase64 })) }
+      : {}),
+  };
+}
 
 export type SendTransactionalEmailResult =
   | { ok: true; messageId: string }
@@ -48,12 +63,7 @@ export async function sendTransactionalEmail(
         "content-type": "application/json",
         accept: "application/json",
       },
-      body: JSON.stringify({
-        sender: { email: env.BREVO_SENDER_EMAIL, name: env.BREVO_SENDER_NAME ?? "YouCommerce" },
-        to: [input.to],
-        subject: input.subject,
-        htmlContent: input.htmlContent,
-      }),
+      body: JSON.stringify(buildBrevoPayload(env, input)),
     });
   } catch (err) {
     return { ok: false, reason: err instanceof Error ? err.message : "Network error" };
