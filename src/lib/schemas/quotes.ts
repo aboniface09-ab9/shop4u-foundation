@@ -65,6 +65,7 @@ export const businessSettingsSchema = z.object({
   branch_code: text(20),
   default_validity_days: z.coerce.number().int().min(1).max(365),
   default_deposit_percent: z.coerce.number().int().min(0).max(100),
+  default_invoice_due_days: z.coerce.number().int().min(0).max(120),
   default_terms: text(8000),
 });
 export type BusinessSettingsInput = z.infer<typeof businessSettingsSchema>;

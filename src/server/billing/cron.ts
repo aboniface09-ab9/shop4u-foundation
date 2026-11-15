@@ -46,6 +46,27 @@ export async function runDailyBillingCron(env: BillingCronEnv, now = new Date())
 
   await suspendExpiredTrialsWithNoCard(admin, now);
   await sendTrialEndingReminders(admin, env, now);
+  await draftDueMonthlyInvoices(admin);
+}
+
+/**
+ * Custom-build clients: drafts each hosting/maintenance invoice that has come due (idempotent: one
+ * per plan per period, and it catches up if a day was missed). They are DRAFTS; nothing is emailed
+ * until the platform admin reviews and sends them from /platform/invoices.
+ * Isolated in its own try/catch so a failure here never blocks the merchant billing jobs above.
+ */
+async function draftDueMonthlyInvoices(admin: ReturnType<typeof getSupabaseAdmin>): Promise<void> {
+  try {
+    const { data, error } = await admin.rpc("generate_due_monthly_invoices");
+    if (error) {
+      console.error("Billing cron: monthly invoice generation failed", error.message);
+      return;
+    }
+    if (typeof data === "number" && data > 0)
+      console.log(`Billing cron: drafted ${data} monthly invoice(s)`);
+  } catch (err) {
+    console.error("Billing cron: monthly invoice generation threw", err);
+  }
 }
 
 async function suspendExpiredTrialsWithNoCard(
@@ -117,7 +138,9 @@ async function sendTrialEndingReminders(
       .eq("role", "owner");
 
     for (const owner of owners ?? []) {
-      const { data: userRes, error: userError } = await admin.auth.admin.getUserById(owner.auth_user_id);
+      const { data: userRes, error: userError } = await admin.auth.admin.getUserById(
+        owner.auth_user_id,
+      );
       const email = userRes?.user?.email;
       if (userError || !email) continue;
 

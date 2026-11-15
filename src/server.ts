@@ -13,6 +13,7 @@ import {
 } from "./server/payfast/handlers";
 import { runDailyBillingCron, type BillingCronEnv } from "./server/billing/cron";
 import { handleQuotePdf, handleSendQuote, type QuotesWorkerEnv } from "./server/quotes/handlers";
+import { handleInvoicePdf, handleSendInvoice } from "./server/invoices/handlers";
 
 /** Quote routes: admin send, and the client's private PDF. See src/server/quotes/handlers.ts. */
 async function tryHandleQuoteRoute(request: Request, env: QuotesWorkerEnv): Promise<Response | undefined> {
@@ -23,6 +24,13 @@ async function tryHandleQuoteRoute(request: Request, env: QuotesWorkerEnv): Prom
   const pdfMatch = /^\/api\/q\/([^/]+)\/pdf$/.exec(pathname);
   if (request.method === "GET" && pdfMatch) {
     return handleQuotePdf(request, pdfMatch[1]);
+  }
+  if (request.method === "POST" && pathname === "/api/platform/invoices/send") {
+    return handleSendInvoice(request, env);
+  }
+  const invoicePdfMatch = /^\/api\/i\/([^/]+)\/pdf$/.exec(pathname);
+  if (request.method === "GET" && invoicePdfMatch) {
+    return handleInvoicePdf(invoicePdfMatch[1]);
   }
   return undefined;
 }
@@ -161,7 +169,8 @@ export default {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       const normalized = await normalizeCatastrophicSsrResponse(response);
-      return new URL(request.url).pathname.startsWith("/q/") ? withPrivatePageHeaders(normalized) : normalized;
+      const path = new URL(request.url).pathname;
+      return path.startsWith("/q/") || path.startsWith("/i/") ? withPrivatePageHeaders(normalized) : normalized;
     } catch (error) {
       console.error(error);
       return brandedErrorResponse();

@@ -22,6 +22,7 @@ export const Route = createFileRoute("/platform")({
 const NAV: { to: string; label: string }[] = [
   { to: "/platform/clients", label: "Clients" },
   { to: "/platform/quotes", label: "Quotes" },
+  { to: "/platform/invoices", label: "Invoices" },
   { to: "/platform/price-list", label: "Price list" },
   { to: "/platform/merchants", label: "Merchants" },
   { to: "/platform/settings", label: "Settings" },

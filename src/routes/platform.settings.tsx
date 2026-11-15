@@ -148,6 +148,18 @@ function BusinessSettingsPage() {
                 defaultValue={String(s.default_deposit_percent)}
               />
             </Field>
+            <Field
+              label="Invoices due after (days)"
+              name="default_invoice_due_days"
+              error={errors.default_invoice_due_days}
+            >
+              <Input
+                id="default_invoice_due_days"
+                name="default_invoice_due_days"
+                inputMode="numeric"
+                defaultValue={String(s.default_invoice_due_days)}
+              />
+            </Field>
             <div className="md:col-span-2">
               <Field
                 label="Standard terms"

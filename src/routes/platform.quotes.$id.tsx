@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useActivity, useClient, useContacts } from "@/data/clients";
+import { KIND_LABEL, useInvoicesForQuote } from "@/data/invoices";
 import {
   useAddLine,
   useDeleteLine,
@@ -77,6 +78,7 @@ function QuoteBuilder() {
       <TotalsPanel quote={quote} lines={lines} />
       <SettingsPanel quote={quote} locked={locked} />
       <SendPanel quote={quote} lineCount={lines.length} />
+      {quote.status === "accepted" && <QuoteInvoices quoteId={quote.id} />}
       <QuoteActivity quoteId={quote.id} />
       {!locked && <DeleteDraft quoteId={quote.id} />}
     </div>
@@ -410,7 +412,12 @@ function SettingsPanel({ quote, locked }: { quote: QuoteRow; locked: boolean }) 
               defaultValue={String(quote.deposit_percent)}
             />
           </Field>
-          <Field label="VAT" name="vat_rate_bps" error={errors.vat_rate_bps}>
+          <Field
+            label="VAT"
+            name="vat_rate_bps"
+            error={errors.vat_rate_bps}
+            hint="Only add VAT if the business is VAT registered (see Settings)."
+          >
             <select
               id="vat_rate_bps"
               name="vat_rate_bps"
@@ -566,6 +573,37 @@ function SendPanel({ quote, lineCount }: { quote: QuoteRow; lineCount: number })
           />
         </div>
       )}
+    </Panel>
+  );
+}
+
+function QuoteInvoices({ quoteId }: { quoteId: string }) {
+  const { data: invoices = [] } = useInvoicesForQuote(quoteId);
+  return (
+    <Panel title="Invoices from this quote">
+      <p className="mb-3 text-xs text-muted">
+        The deposit invoice is drafted on acceptance; the balance and the first monthly invoice are
+        drafted when the project goes live.
+      </p>
+      <ul className="divide-y divide-border text-sm">
+        {invoices.length === 0 && <li className="py-2 text-muted">None yet.</li>}
+        {invoices.map((i) => (
+          <li key={i.id} className="flex items-center justify-between gap-3 py-2">
+            <Link
+              to="/platform/invoices/$id"
+              params={{ id: i.id }}
+              className="font-mono hover:underline"
+            >
+              {i.number}
+            </Link>
+            <span>{KIND_LABEL[i.kind]}</span>
+            <Badge variant="outline" className="capitalize">
+              {i.status}
+            </Badge>
+            <span className="font-mono">{formatCents(i.total_cents)}</span>
+          </li>
+        ))}
+      </ul>
     </Panel>
   );
 }

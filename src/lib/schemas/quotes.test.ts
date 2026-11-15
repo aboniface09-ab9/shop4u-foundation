@@ -66,11 +66,15 @@ describe("businessSettingsSchema", () => {
     const ok = {
       legal_name: "Example (Pty) Ltd",
       default_validity_days: "30",
+      default_invoice_due_days: "7",
       default_deposit_percent: "50",
     };
     expect(businessSettingsSchema.safeParse(ok).success).toBe(true);
     expect(businessSettingsSchema.safeParse({ ...ok, legal_name: "" }).success).toBe(false);
     expect(businessSettingsSchema.safeParse({ ...ok, email: "nope" }).success).toBe(false);
     expect(businessSettingsSchema.safeParse({ ...ok, account_number: "12ab" }).success).toBe(false);
+    expect(
+      businessSettingsSchema.safeParse({ ...ok, default_invoice_due_days: "121" }).success,
+    ).toBe(false);
   });
 });

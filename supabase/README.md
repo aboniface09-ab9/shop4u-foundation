@@ -29,3 +29,14 @@ orders table (not in the repo; dump it from production before testing storefront
 The dev project has a fictional platform admin `dev-admin@example.com` (and fictional "Example Seafood Co" data) for UI checks.
 Delete both before the dev project is ever used for anything else. Run the app against it with the `portal-dev-db`
 launch config (port 8081); it uses the project's public key only.
+
+## Dev data left by Phase 5 testing
+`youcommerce-dev` also holds fictional "Example Seafood Co" records: one accepted quote (Q-2026-0001), a paid deposit invoice
+(INV-2026-0001) and a pending recurring plan, plus placeholder bank details ("Example Bank", all-zero account) in business settings.
+None of it is real. Delete it, or reset the dev database, before using dev for anything else.
+Run `supabase/tests/invoices.sql` after applying `20261115000005_invoices.sql`; it must end with 'ALL CHECKS PASSED'.
+
+## Production rollout notes for invoices
+- The daily cron (`src/server/billing/cron.ts`) calls `generate_due_monthly_invoices()` with the service-role key (already a Worker secret).
+  It only drafts invoices; nothing is emailed automatically.
+- Before the first real send, enter real bank details in /platform/settings, and set the Brevo Worker secrets.
