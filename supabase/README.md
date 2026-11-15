@@ -17,3 +17,10 @@ is named `shop-4-u-dev`. Do not develop against it.
 - New schema changes are new files in `migrations/` named `YYYYMMDDHHMMSS_description.sql`.
 - Apply to dev, run `tests/*.sql`, then production only with approval.
 - `tests/security_hardening.sql` must pass after `migrations/20261115000001_security_hardening.sql`.
+
+## Status of the dev project (15 Nov 2026)
+`youcommerce-dev` (ref `lgkreasgzfldjyblwokw`, eu-west-1) has the repo schema, categories, payfast config, platform_admins,
+the two storage buckets, and the security hardening migration applied. `tests/security_hardening.sql` passes.
+Before hardening, the same checks showed a merchant could set their own plan/billing_state and link themselves to another tenant.
+Not loaded on dev: real merchant seed data, onboarding_submissions, and whatever anonymous-checkout policy exists on the live
+orders table (not in the repo; dump it from production before testing storefront checkout on dev).
