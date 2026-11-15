@@ -18,8 +18,10 @@ import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
+import { Route as PlatformMerchantsRouteImport } from './routes/platform.merchants'
 import { Route as OrderRefRouteImport } from './routes/order.$ref'
 import { Route as MockGatewayRefRouteImport } from './routes/mock-gateway.$ref'
 import { Route as AdminThemeRouteImport } from './routes/admin.theme'
@@ -76,6 +78,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformIndexRoute = PlatformIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PlatformRoute,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -85,6 +92,11 @@ const ProductIdRoute = ProductIdRouteImport.update({
   id: '/product/$id',
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformMerchantsRoute = PlatformMerchantsRouteImport.update({
+  id: '/merchants',
+  path: '/merchants',
+  getParentRoute: () => PlatformRoute,
 } as any)
 const OrderRefRoute = OrderRefRouteImport.update({
   id: '/order/$ref',
@@ -144,7 +156,7 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRoute
   '/dev-payfast-test': typeof DevPayfastTestRoute
   '/login': typeof LoginRoute
-  '/platform': typeof PlatformRoute
+  '/platform': typeof PlatformRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -154,8 +166,10 @@ export interface FileRoutesByFullPath {
   '/admin/theme': typeof AdminThemeRoute
   '/mock-gateway/$ref': typeof MockGatewayRefRoute
   '/order/$ref': typeof OrderRefRoute
+  '/platform/merchants': typeof PlatformMerchantsRoute
   '/product/$id': typeof ProductIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/platform/': typeof PlatformIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
   '/admin/products/': typeof AdminProductsIndexRoute
@@ -166,7 +180,6 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRoute
   '/dev-payfast-test': typeof DevPayfastTestRoute
   '/login': typeof LoginRoute
-  '/platform': typeof PlatformRoute
   '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -175,8 +188,10 @@ export interface FileRoutesByTo {
   '/admin/theme': typeof AdminThemeRoute
   '/mock-gateway/$ref': typeof MockGatewayRefRoute
   '/order/$ref': typeof OrderRefRoute
+  '/platform/merchants': typeof PlatformMerchantsRoute
   '/product/$id': typeof ProductIdRoute
   '/admin': typeof AdminIndexRoute
+  '/platform': typeof PlatformIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
   '/admin/products': typeof AdminProductsIndexRoute
@@ -189,7 +204,7 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRoute
   '/dev-payfast-test': typeof DevPayfastTestRoute
   '/login': typeof LoginRoute
-  '/platform': typeof PlatformRoute
+  '/platform': typeof PlatformRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/admin/customers': typeof AdminCustomersRoute
@@ -199,8 +214,10 @@ export interface FileRoutesById {
   '/admin/theme': typeof AdminThemeRoute
   '/mock-gateway/$ref': typeof MockGatewayRefRoute
   '/order/$ref': typeof OrderRefRoute
+  '/platform/merchants': typeof PlatformMerchantsRoute
   '/product/$id': typeof ProductIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/platform/': typeof PlatformIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
   '/admin/products/': typeof AdminProductsIndexRoute
@@ -224,8 +241,10 @@ export interface FileRouteTypes {
     | '/admin/theme'
     | '/mock-gateway/$ref'
     | '/order/$ref'
+    | '/platform/merchants'
     | '/product/$id'
     | '/admin/'
+    | '/platform/'
     | '/admin/products/$id'
     | '/admin/products/new'
     | '/admin/products/'
@@ -236,7 +255,6 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/dev-payfast-test'
     | '/login'
-    | '/platform'
     | '/reset-password'
     | '/shop'
     | '/admin/customers'
@@ -245,8 +263,10 @@ export interface FileRouteTypes {
     | '/admin/theme'
     | '/mock-gateway/$ref'
     | '/order/$ref'
+    | '/platform/merchants'
     | '/product/$id'
     | '/admin'
+    | '/platform'
     | '/admin/products/$id'
     | '/admin/products/new'
     | '/admin/products'
@@ -268,8 +288,10 @@ export interface FileRouteTypes {
     | '/admin/theme'
     | '/mock-gateway/$ref'
     | '/order/$ref'
+    | '/platform/merchants'
     | '/product/$id'
     | '/admin/'
+    | '/platform/'
     | '/admin/products/$id'
     | '/admin/products/new'
     | '/admin/products/'
@@ -282,7 +304,7 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRoute
   DevPayfastTestRoute: typeof DevPayfastTestRoute
   LoginRoute: typeof LoginRoute
-  PlatformRoute: typeof PlatformRoute
+  PlatformRoute: typeof PlatformRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   ShopRoute: typeof ShopRoute
   MockGatewayRefRoute: typeof MockGatewayRefRoute
@@ -355,6 +377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/': {
+      id: '/platform/'
+      path: '/'
+      fullPath: '/platform/'
+      preLoaderRoute: typeof PlatformIndexRouteImport
+      parentRoute: typeof PlatformRoute
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
@@ -368,6 +397,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/product/$id'
       preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/platform/merchants': {
+      id: '/platform/merchants'
+      path: '/merchants'
+      fullPath: '/platform/merchants'
+      preLoaderRoute: typeof PlatformMerchantsRouteImport
+      parentRoute: typeof PlatformRoute
     }
     '/order/$ref': {
       id: '/order/$ref'
@@ -478,6 +514,20 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface PlatformRouteChildren {
+  PlatformMerchantsRoute: typeof PlatformMerchantsRoute
+  PlatformIndexRoute: typeof PlatformIndexRoute
+}
+
+const PlatformRouteChildren: PlatformRouteChildren = {
+  PlatformMerchantsRoute: PlatformMerchantsRoute,
+  PlatformIndexRoute: PlatformIndexRoute,
+}
+
+const PlatformRouteWithChildren = PlatformRoute._addFileChildren(
+  PlatformRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -485,7 +535,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRoute,
   DevPayfastTestRoute: DevPayfastTestRoute,
   LoginRoute: LoginRoute,
-  PlatformRoute: PlatformRoute,
+  PlatformRoute: PlatformRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   ShopRoute: ShopRoute,
   MockGatewayRefRoute: MockGatewayRefRoute,
