@@ -10,21 +10,39 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ShopRouteImport } from './routes/shop'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as PlatformRouteImport } from './routes/platform'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DevPayfastTestRouteImport } from './routes/dev-payfast-test'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as QTokenRouteImport } from './routes/q.$token'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
+import { Route as PlatformSettingsRouteImport } from './routes/platform.settings'
+import { Route as PlatformPriceListRouteImport } from './routes/platform.price-list'
+import { Route as PlatformMerchantsRouteImport } from './routes/platform.merchants'
 import { Route as OrderRefRouteImport } from './routes/order.$ref'
 import { Route as MockGatewayRefRouteImport } from './routes/mock-gateway.$ref'
+import { Route as ITokenRouteImport } from './routes/i.$token'
 import { Route as AdminThemeRouteImport } from './routes/admin.theme'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
+import { Route as PlatformQuotesIndexRouteImport } from './routes/platform.quotes.index'
+import { Route as PlatformInvoicesIndexRouteImport } from './routes/platform.invoices.index'
+import { Route as PlatformClientsIndexRouteImport } from './routes/platform.clients.index'
 import { Route as AdminProductsIndexRouteImport } from './routes/admin.products.index'
+import { Route as PlatformQuotesNewRouteImport } from './routes/platform.quotes.new'
+import { Route as PlatformQuotesIdRouteImport } from './routes/platform.quotes.$id'
+import { Route as PlatformProjectsIdRouteImport } from './routes/platform.projects.$id'
+import { Route as PlatformInvoicesIdRouteImport } from './routes/platform.invoices.$id'
+import { Route as PlatformClientsNewRouteImport } from './routes/platform.clients.new'
+import { Route as PlatformClientsIdRouteImport } from './routes/platform.clients.$id'
 import { Route as AdminProductsNewRouteImport } from './routes/admin.products.new'
 import { Route as AdminProductsIdRouteImport } from './routes/admin.products.$id'
 
@@ -33,9 +51,24 @@ const ShopRoute = ShopRouteImport.update({
   path: '/shop',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformRoute = PlatformRouteImport.update({
+  id: '/platform',
+  path: '/platform',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevPayfastTestRoute = DevPayfastTestRouteImport.update({
+  id: '/dev-payfast-test',
+  path: '/dev-payfast-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -58,15 +91,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformIndexRoute = PlatformIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PlatformRoute,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const QTokenRoute = QTokenRouteImport.update({
+  id: '/q/$token',
+  path: '/q/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductIdRoute = ProductIdRouteImport.update({
   id: '/product/$id',
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformSettingsRoute = PlatformSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformPriceListRoute = PlatformPriceListRouteImport.update({
+  id: '/price-list',
+  path: '/price-list',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformMerchantsRoute = PlatformMerchantsRouteImport.update({
+  id: '/merchants',
+  path: '/merchants',
+  getParentRoute: () => PlatformRoute,
 } as any)
 const OrderRefRoute = OrderRefRouteImport.update({
   id: '/order/$ref',
@@ -76,6 +134,11 @@ const OrderRefRoute = OrderRefRouteImport.update({
 const MockGatewayRefRoute = MockGatewayRefRouteImport.update({
   id: '/mock-gateway/$ref',
   path: '/mock-gateway/$ref',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ITokenRoute = ITokenRouteImport.update({
+  id: '/i/$token',
+  path: '/i/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminThemeRoute = AdminThemeRouteImport.update({
@@ -103,10 +166,55 @@ const AdminCustomersRoute = AdminCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AdminRoute,
 } as any)
+const PlatformQuotesIndexRoute = PlatformQuotesIndexRouteImport.update({
+  id: '/quotes/',
+  path: '/quotes/',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformInvoicesIndexRoute = PlatformInvoicesIndexRouteImport.update({
+  id: '/invoices/',
+  path: '/invoices/',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformClientsIndexRoute = PlatformClientsIndexRouteImport.update({
+  id: '/clients/',
+  path: '/clients/',
+  getParentRoute: () => PlatformRoute,
+} as any)
 const AdminProductsIndexRoute = AdminProductsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminProductsRoute,
+} as any)
+const PlatformQuotesNewRoute = PlatformQuotesNewRouteImport.update({
+  id: '/quotes/new',
+  path: '/quotes/new',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformQuotesIdRoute = PlatformQuotesIdRouteImport.update({
+  id: '/quotes/$id',
+  path: '/quotes/$id',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformProjectsIdRoute = PlatformProjectsIdRouteImport.update({
+  id: '/projects/$id',
+  path: '/projects/$id',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformInvoicesIdRoute = PlatformInvoicesIdRouteImport.update({
+  id: '/invoices/$id',
+  path: '/invoices/$id',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformClientsNewRoute = PlatformClientsNewRouteImport.update({
+  id: '/clients/new',
+  path: '/clients/new',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformClientsIdRoute = PlatformClientsIdRouteImport.update({
+  id: '/clients/$id',
+  path: '/clients/$id',
+  getParentRoute: () => PlatformRoute,
 } as any)
 const AdminProductsNewRoute = AdminProductsNewRouteImport.update({
   id: '/new',
@@ -124,38 +232,73 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/dev-payfast-test': typeof DevPayfastTestRoute
   '/login': typeof LoginRoute
+  '/platform': typeof PlatformRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/theme': typeof AdminThemeRoute
+  '/i/$token': typeof ITokenRoute
   '/mock-gateway/$ref': typeof MockGatewayRefRoute
   '/order/$ref': typeof OrderRefRoute
+  '/platform/merchants': typeof PlatformMerchantsRoute
+  '/platform/price-list': typeof PlatformPriceListRoute
+  '/platform/settings': typeof PlatformSettingsRoute
   '/product/$id': typeof ProductIdRoute
+  '/q/$token': typeof QTokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/platform/': typeof PlatformIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
+  '/platform/clients/$id': typeof PlatformClientsIdRoute
+  '/platform/clients/new': typeof PlatformClientsNewRoute
+  '/platform/invoices/$id': typeof PlatformInvoicesIdRoute
+  '/platform/projects/$id': typeof PlatformProjectsIdRoute
+  '/platform/quotes/$id': typeof PlatformQuotesIdRoute
+  '/platform/quotes/new': typeof PlatformQuotesNewRoute
   '/admin/products/': typeof AdminProductsIndexRoute
+  '/platform/clients/': typeof PlatformClientsIndexRoute
+  '/platform/invoices/': typeof PlatformInvoicesIndexRoute
+  '/platform/quotes/': typeof PlatformQuotesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/dev-payfast-test': typeof DevPayfastTestRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/theme': typeof AdminThemeRoute
+  '/i/$token': typeof ITokenRoute
   '/mock-gateway/$ref': typeof MockGatewayRefRoute
   '/order/$ref': typeof OrderRefRoute
+  '/platform/merchants': typeof PlatformMerchantsRoute
+  '/platform/price-list': typeof PlatformPriceListRoute
+  '/platform/settings': typeof PlatformSettingsRoute
   '/product/$id': typeof ProductIdRoute
+  '/q/$token': typeof QTokenRoute
   '/admin': typeof AdminIndexRoute
+  '/platform': typeof PlatformIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
+  '/platform/clients/$id': typeof PlatformClientsIdRoute
+  '/platform/clients/new': typeof PlatformClientsNewRoute
+  '/platform/invoices/$id': typeof PlatformInvoicesIdRoute
+  '/platform/projects/$id': typeof PlatformProjectsIdRoute
+  '/platform/quotes/$id': typeof PlatformQuotesIdRoute
+  '/platform/quotes/new': typeof PlatformQuotesNewRoute
   '/admin/products': typeof AdminProductsIndexRoute
+  '/platform/clients': typeof PlatformClientsIndexRoute
+  '/platform/invoices': typeof PlatformInvoicesIndexRoute
+  '/platform/quotes': typeof PlatformQuotesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -163,20 +306,38 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/dev-payfast-test': typeof DevPayfastTestRoute
   '/login': typeof LoginRoute
+  '/platform': typeof PlatformRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/shop': typeof ShopRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRouteWithChildren
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/theme': typeof AdminThemeRoute
+  '/i/$token': typeof ITokenRoute
   '/mock-gateway/$ref': typeof MockGatewayRefRoute
   '/order/$ref': typeof OrderRefRoute
+  '/platform/merchants': typeof PlatformMerchantsRoute
+  '/platform/price-list': typeof PlatformPriceListRoute
+  '/platform/settings': typeof PlatformSettingsRoute
   '/product/$id': typeof ProductIdRoute
+  '/q/$token': typeof QTokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/platform/': typeof PlatformIndexRoute
   '/admin/products/$id': typeof AdminProductsIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
+  '/platform/clients/$id': typeof PlatformClientsIdRoute
+  '/platform/clients/new': typeof PlatformClientsNewRoute
+  '/platform/invoices/$id': typeof PlatformInvoicesIdRoute
+  '/platform/projects/$id': typeof PlatformProjectsIdRoute
+  '/platform/quotes/$id': typeof PlatformQuotesIdRoute
+  '/platform/quotes/new': typeof PlatformQuotesNewRoute
   '/admin/products/': typeof AdminProductsIndexRoute
+  '/platform/clients/': typeof PlatformClientsIndexRoute
+  '/platform/invoices/': typeof PlatformInvoicesIndexRoute
+  '/platform/quotes/': typeof PlatformQuotesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -185,58 +346,111 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cart'
     | '/checkout'
+    | '/dev-payfast-test'
     | '/login'
+    | '/platform'
+    | '/reset-password'
     | '/shop'
     | '/admin/customers'
     | '/admin/orders'
     | '/admin/products'
     | '/admin/settings'
     | '/admin/theme'
+    | '/i/$token'
     | '/mock-gateway/$ref'
     | '/order/$ref'
+    | '/platform/merchants'
+    | '/platform/price-list'
+    | '/platform/settings'
     | '/product/$id'
+    | '/q/$token'
     | '/admin/'
+    | '/platform/'
     | '/admin/products/$id'
     | '/admin/products/new'
+    | '/platform/clients/$id'
+    | '/platform/clients/new'
+    | '/platform/invoices/$id'
+    | '/platform/projects/$id'
+    | '/platform/quotes/$id'
+    | '/platform/quotes/new'
     | '/admin/products/'
+    | '/platform/clients/'
+    | '/platform/invoices/'
+    | '/platform/quotes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/cart'
     | '/checkout'
+    | '/dev-payfast-test'
     | '/login'
+    | '/reset-password'
     | '/shop'
     | '/admin/customers'
     | '/admin/orders'
     | '/admin/settings'
     | '/admin/theme'
+    | '/i/$token'
     | '/mock-gateway/$ref'
     | '/order/$ref'
+    | '/platform/merchants'
+    | '/platform/price-list'
+    | '/platform/settings'
     | '/product/$id'
+    | '/q/$token'
     | '/admin'
+    | '/platform'
     | '/admin/products/$id'
     | '/admin/products/new'
+    | '/platform/clients/$id'
+    | '/platform/clients/new'
+    | '/platform/invoices/$id'
+    | '/platform/projects/$id'
+    | '/platform/quotes/$id'
+    | '/platform/quotes/new'
     | '/admin/products'
+    | '/platform/clients'
+    | '/platform/invoices'
+    | '/platform/quotes'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/cart'
     | '/checkout'
+    | '/dev-payfast-test'
     | '/login'
+    | '/platform'
+    | '/reset-password'
     | '/shop'
     | '/admin/customers'
     | '/admin/orders'
     | '/admin/products'
     | '/admin/settings'
     | '/admin/theme'
+    | '/i/$token'
     | '/mock-gateway/$ref'
     | '/order/$ref'
+    | '/platform/merchants'
+    | '/platform/price-list'
+    | '/platform/settings'
     | '/product/$id'
+    | '/q/$token'
     | '/admin/'
+    | '/platform/'
     | '/admin/products/$id'
     | '/admin/products/new'
+    | '/platform/clients/$id'
+    | '/platform/clients/new'
+    | '/platform/invoices/$id'
+    | '/platform/projects/$id'
+    | '/platform/quotes/$id'
+    | '/platform/quotes/new'
     | '/admin/products/'
+    | '/platform/clients/'
+    | '/platform/invoices/'
+    | '/platform/quotes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -244,11 +458,16 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
+  DevPayfastTestRoute: typeof DevPayfastTestRoute
   LoginRoute: typeof LoginRoute
+  PlatformRoute: typeof PlatformRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ShopRoute: typeof ShopRoute
+  ITokenRoute: typeof ITokenRoute
   MockGatewayRefRoute: typeof MockGatewayRefRoute
   OrderRefRoute: typeof OrderRefRoute
   ProductIdRoute: typeof ProductIdRoute
+  QTokenRoute: typeof QTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -260,11 +479,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform': {
+      id: '/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof PlatformRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev-payfast-test': {
+      id: '/dev-payfast-test'
+      path: '/dev-payfast-test'
+      fullPath: '/dev-payfast-test'
+      preLoaderRoute: typeof DevPayfastTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -295,6 +535,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/': {
+      id: '/platform/'
+      path: '/'
+      fullPath: '/platform/'
+      preLoaderRoute: typeof PlatformIndexRouteImport
+      parentRoute: typeof PlatformRoute
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
@@ -302,12 +549,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/q/$token': {
+      id: '/q/$token'
+      path: '/q/$token'
+      fullPath: '/q/$token'
+      preLoaderRoute: typeof QTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/$id': {
       id: '/product/$id'
       path: '/product/$id'
       fullPath: '/product/$id'
       preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/platform/settings': {
+      id: '/platform/settings'
+      path: '/settings'
+      fullPath: '/platform/settings'
+      preLoaderRoute: typeof PlatformSettingsRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/price-list': {
+      id: '/platform/price-list'
+      path: '/price-list'
+      fullPath: '/platform/price-list'
+      preLoaderRoute: typeof PlatformPriceListRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/merchants': {
+      id: '/platform/merchants'
+      path: '/merchants'
+      fullPath: '/platform/merchants'
+      preLoaderRoute: typeof PlatformMerchantsRouteImport
+      parentRoute: typeof PlatformRoute
     }
     '/order/$ref': {
       id: '/order/$ref'
@@ -321,6 +596,13 @@ declare module '@tanstack/react-router' {
       path: '/mock-gateway/$ref'
       fullPath: '/mock-gateway/$ref'
       preLoaderRoute: typeof MockGatewayRefRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/i/$token': {
+      id: '/i/$token'
+      path: '/i/$token'
+      fullPath: '/i/$token'
+      preLoaderRoute: typeof ITokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/theme': {
@@ -358,12 +640,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCustomersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/platform/quotes/': {
+      id: '/platform/quotes/'
+      path: '/quotes'
+      fullPath: '/platform/quotes/'
+      preLoaderRoute: typeof PlatformQuotesIndexRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/invoices/': {
+      id: '/platform/invoices/'
+      path: '/invoices'
+      fullPath: '/platform/invoices/'
+      preLoaderRoute: typeof PlatformInvoicesIndexRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/clients/': {
+      id: '/platform/clients/'
+      path: '/clients'
+      fullPath: '/platform/clients/'
+      preLoaderRoute: typeof PlatformClientsIndexRouteImport
+      parentRoute: typeof PlatformRoute
+    }
     '/admin/products/': {
       id: '/admin/products/'
       path: '/'
       fullPath: '/admin/products/'
       preLoaderRoute: typeof AdminProductsIndexRouteImport
       parentRoute: typeof AdminProductsRoute
+    }
+    '/platform/quotes/new': {
+      id: '/platform/quotes/new'
+      path: '/quotes/new'
+      fullPath: '/platform/quotes/new'
+      preLoaderRoute: typeof PlatformQuotesNewRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/quotes/$id': {
+      id: '/platform/quotes/$id'
+      path: '/quotes/$id'
+      fullPath: '/platform/quotes/$id'
+      preLoaderRoute: typeof PlatformQuotesIdRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/projects/$id': {
+      id: '/platform/projects/$id'
+      path: '/projects/$id'
+      fullPath: '/platform/projects/$id'
+      preLoaderRoute: typeof PlatformProjectsIdRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/invoices/$id': {
+      id: '/platform/invoices/$id'
+      path: '/invoices/$id'
+      fullPath: '/platform/invoices/$id'
+      preLoaderRoute: typeof PlatformInvoicesIdRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/clients/new': {
+      id: '/platform/clients/new'
+      path: '/clients/new'
+      fullPath: '/platform/clients/new'
+      preLoaderRoute: typeof PlatformClientsNewRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/clients/$id': {
+      id: '/platform/clients/$id'
+      path: '/clients/$id'
+      fullPath: '/platform/clients/$id'
+      preLoaderRoute: typeof PlatformClientsIdRouteImport
+      parentRoute: typeof PlatformRoute
     }
     '/admin/products/new': {
       id: '/admin/products/new'
@@ -418,16 +763,57 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface PlatformRouteChildren {
+  PlatformMerchantsRoute: typeof PlatformMerchantsRoute
+  PlatformPriceListRoute: typeof PlatformPriceListRoute
+  PlatformSettingsRoute: typeof PlatformSettingsRoute
+  PlatformIndexRoute: typeof PlatformIndexRoute
+  PlatformClientsIdRoute: typeof PlatformClientsIdRoute
+  PlatformClientsNewRoute: typeof PlatformClientsNewRoute
+  PlatformInvoicesIdRoute: typeof PlatformInvoicesIdRoute
+  PlatformProjectsIdRoute: typeof PlatformProjectsIdRoute
+  PlatformQuotesIdRoute: typeof PlatformQuotesIdRoute
+  PlatformQuotesNewRoute: typeof PlatformQuotesNewRoute
+  PlatformClientsIndexRoute: typeof PlatformClientsIndexRoute
+  PlatformInvoicesIndexRoute: typeof PlatformInvoicesIndexRoute
+  PlatformQuotesIndexRoute: typeof PlatformQuotesIndexRoute
+}
+
+const PlatformRouteChildren: PlatformRouteChildren = {
+  PlatformMerchantsRoute: PlatformMerchantsRoute,
+  PlatformPriceListRoute: PlatformPriceListRoute,
+  PlatformSettingsRoute: PlatformSettingsRoute,
+  PlatformIndexRoute: PlatformIndexRoute,
+  PlatformClientsIdRoute: PlatformClientsIdRoute,
+  PlatformClientsNewRoute: PlatformClientsNewRoute,
+  PlatformInvoicesIdRoute: PlatformInvoicesIdRoute,
+  PlatformProjectsIdRoute: PlatformProjectsIdRoute,
+  PlatformQuotesIdRoute: PlatformQuotesIdRoute,
+  PlatformQuotesNewRoute: PlatformQuotesNewRoute,
+  PlatformClientsIndexRoute: PlatformClientsIndexRoute,
+  PlatformInvoicesIndexRoute: PlatformInvoicesIndexRoute,
+  PlatformQuotesIndexRoute: PlatformQuotesIndexRoute,
+}
+
+const PlatformRouteWithChildren = PlatformRoute._addFileChildren(
+  PlatformRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
+  DevPayfastTestRoute: DevPayfastTestRoute,
   LoginRoute: LoginRoute,
+  PlatformRoute: PlatformRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
   ShopRoute: ShopRoute,
+  ITokenRoute: ITokenRoute,
   MockGatewayRefRoute: MockGatewayRefRoute,
   OrderRefRoute: OrderRefRoute,
   ProductIdRoute: ProductIdRoute,
+  QTokenRoute: QTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

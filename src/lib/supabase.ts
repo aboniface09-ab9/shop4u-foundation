@@ -18,9 +18,9 @@ if (!url || !anonKey) {
 
 export const supabase = createClient(url, anonKey, {
   auth: {
-    persistSession: true,        // merchant logins survive page refresh
-    autoRefreshToken: true,      // refresh JWTs automatically before expiry
-    detectSessionInUrl: false,   // we don't use OAuth redirects yet
+    persistSession: true, // merchant logins survive page refresh
+    autoRefreshToken: true, // refresh JWTs automatically before expiry
+    detectSessionInUrl: false, // we don't use OAuth redirects yet
   },
 });
 
@@ -32,9 +32,24 @@ export const supabase = createClient(url, anonKey, {
 export type ThemePreset = "heritage" | "onyx" | "volt";
 export type LayoutPreset = "boutique" | "catalogue" | "specialist";
 
+// Keys map 1:1 to the CSS custom properties defined per-preset in
+// styles.css (onPrimary -> --on-primary). Any subset may be present —
+// unset keys fall back to whatever the active preset already defines.
+export type ThemeColorKey =
+  | "bg"
+  | "surface"
+  | "text"
+  | "muted"
+  | "border"
+  | "primary"
+  | "onPrimary"
+  | "accent";
+
+export type ThemeColors = Partial<Record<ThemeColorKey, string>>;
+
 export type TenantTheme = {
   preset?: ThemePreset;
-  colors?: Record<string, string>;
+  colors?: ThemeColors;
   fonts?: Record<string, string>;
   radius?: Record<string, number>;
 };
@@ -45,6 +60,15 @@ export type TenantContent = {
   hero_description?: string;
   hero_cta_primary?: string;
   hero_cta_secondary?: string;
+  // Product slugs the merchant has chosen to rotate through in the
+  // homepage hero (Admin → Settings → Homepage hero). Order in this array
+  // is the rotation order. Empty/unset falls back to a single static
+  // product (the old behaviour) rather than an arbitrary auto-pick, so a
+  // merchant who's never touched this setting sees no surprise changes.
+  hero_product_slugs?: string[];
+  // Flat delivery fee in rand charged once per order (Admin → Settings →
+  // Delivery). Unset or 0 means no delivery charge.
+  shipping_fee?: number;
   studio_headline?: string;
   studio_body?: string;
 };
@@ -55,6 +79,10 @@ export type TenantRow = {
   name: string;
   store_name: string | null;
   logo_mark: string | null;
+  // Public URL of the merchant's uploaded logo image (Supabase Storage,
+  // "tenant-logos" bucket). Null until they upload one — logo_mark (short
+  // text wordmark) remains the fallback shown in its place.
+  logo_url: string | null;
   custom_domain: string | null;
   plan: "starter" | "growth" | "pro";
   billing_state:
@@ -68,6 +96,23 @@ export type TenantRow = {
   trial_ends_at: string | null;
   theme: TenantTheme;
   content: TenantContent;
+  // Not VAT-registered businesses can't legally charge VAT at all, so
+  // this fully disables the VAT line rather than toggling inclusive/
+  // exclusive display. Defaults to true (most merchants are registered
+  // or will be once they cross the R1m turnover threshold).
+  vat_registered: boolean;
+  // International format, no leading + (e.g. "27795055741"). Falls back
+  // to VITE_WHATSAPP_NUMBER if not set on the tenant.
+  whatsapp_number: string | null;
+  // Per-tenant scoping for the "Pay by card" checkout button. Deliberately
+  // a plain public boolean on `tenants` (read via the anon client, same as
+  // everything else here) — NOT the same thing as having real PayFast
+  // credentials, which live in the separate, service-role-only
+  // `tenant_payfast_config` table. Set this to true only after that config
+  // row actually exists for the tenant; otherwise the button shows but
+  // errors on click. Toggled manually via SQL for now (see
+  // supabase-payfast-enabled-migration.sql) — no admin UI yet.
+  payfast_enabled: boolean;
   created_at: string;
   updated_at: string;
 };

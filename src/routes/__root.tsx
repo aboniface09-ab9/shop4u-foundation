@@ -47,7 +47,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <h1 className="font-heading text-xl font-semibold">Something broke</h1>
         <p className="mt-2 text-sm text-muted">{error.message}</p>
         <button
-          onClick={() => { router.invalidate(); reset(); }}
+          onClick={() => {
+            router.invalidate();
+            reset();
+          }}
           className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary"
         >
           Try again
@@ -77,7 +80,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "YouCommerce" },
       { name: "description", content: "Your shop. Your brand. Live in an hour." },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/png", href: "/logo-mark.png" },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -116,20 +122,35 @@ function RootComponent() {
  */
 function AppShell() {
   const { tenantSlug } = Route.useLoaderData();
-  const { theme, layout } = useThemeStore();
+  const { theme, layout, colors } = useThemeStore();
   const { pathname } = useLocation();
-  const isAdmin = pathname.startsWith("/admin");
+  // /platform is Adam's cross-tenant dashboard (see src/routes/platform.tsx)
+  // — not a merchant storefront or a per-tenant /admin console, so it gets
+  // the same treatment as /admin here: no storefront chrome, and tenant
+  // resolution shouldn't bother with the hostname-resolved slug for it.
+  // /q/:token and /i/:token are a client's private quote/invoice pages: also no storefront chrome.
+  const isAdmin =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/platform") ||
+    pathname.startsWith("/q/") ||
+    pathname.startsWith("/i/");
 
   // Hydrate auth state from existing session, subscribe to changes.
   useAuthBootstrap();
 
   // Bootstrap the current tenant. Slug resolved server-side from the
-  // Host header — no env var needed at runtime.
-  useTenantBootstrap(tenantSlug);
+  // Host header — no env var needed at runtime. isAdmin gates whether a
+  // signed-in user's own tenant_users link is allowed to override the
+  // hostname-resolved slug (only inside /admin (and /platform) — never on
+  // the storefront).
+  useTenantBootstrap(tenantSlug, isAdmin);
 
-  // Re-apply theme tokens whenever the preset changes (theme can be
-  // changed locally via DevPanel / theme editor even after bootstrap).
-  useEffect(() => { applyTheme(theme, layout); }, [theme, layout]);
+  // Re-apply theme tokens whenever the preset or custom colors change
+  // (theme can be changed locally via DevPanel / theme editor even after
+  // bootstrap, or come from the tenant's saved custom color overrides).
+  useEffect(() => {
+    applyTheme(theme, layout, colors);
+  }, [theme, layout, colors]);
 
   return (
     <>

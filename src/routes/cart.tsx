@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Minus, Plus, X } from "lucide-react";
-import { useCart, SHIPPING_FLAT, VAT_RATE } from "@/store/cart";
+import { useCart, calcOrderTotals } from "@/store/cart";
+import { useTenant } from "@/store/tenant";
 import { ProductImage } from "@/components/ProductImage";
 import { Button } from "@/components/ui/button";
 import { formatZAR } from "@/lib/format";
@@ -11,10 +12,11 @@ export const Route = createFileRoute("/cart")({
 
 function CartPage() {
   const { items, setQty, remove, subtotal } = useCart();
+  const tenant = useTenant();
+  const vatRegistered = tenant?.vat_registered ?? true;
   const sub = subtotal();
-  const shipping = items.length ? SHIPPING_FLAT : 0;
-  const vat = Math.round((sub + shipping) * VAT_RATE);
-  const total = sub + shipping + vat;
+  const shipping = items.length ? (tenant?.content?.shipping_fee ?? 0) : 0;
+  const { vat, total } = calcOrderTotals(sub, shipping, vatRegistered);
 
   if (items.length === 0) {
     return (
@@ -34,7 +36,7 @@ function CartPage() {
           {items.map((i) => (
             <li key={i.id + i.size} className="flex gap-5 py-6">
               <div className="h-32 w-24 shrink-0 overflow-hidden rounded-sm">
-                <ProductImage name={i.name} category={i.category} color={i.imageColor} size="sm" />
+                <ProductImage name={i.name} category={i.category} color={i.imageColor} imageUrl={i.imageUrl} size="sm" />
               </div>
               <div className="flex-1">
                 <div className="flex justify-between">
@@ -62,13 +64,15 @@ function CartPage() {
             <h2 className="font-heading text-xl font-semibold mb-4">Summary</h2>
             <dl className="space-y-2 text-sm">
               <Row label="Subtotal" value={formatZAR(sub)} />
-              <Row label="Shipping" value={formatZAR(shipping)} />
-              <Row label="VAT (15%)" value={formatZAR(vat)} />
+              <Row label="Delivery" value={shipping > 0 ? formatZAR(shipping) : "Free"} />
             </dl>
             <div className="border-t border-border mt-4 pt-4 flex justify-between">
               <span className="font-heading font-semibold">Total</span>
               <span className="font-mono font-semibold text-lg">{formatZAR(total)}</span>
             </div>
+            {vatRegistered && (
+              <p className="text-[11px] text-muted mt-1.5">Includes VAT (15%): {formatZAR(vat)}</p>
+            )}
             <Button asChild size="lg" className="w-full mt-6"><Link to="/checkout">Checkout</Link></Button>
           </div>
         </aside>

@@ -24,6 +24,7 @@ import {
 import { ImageUpload } from "@/components/ImageUpload";
 import { CategoryCombobox } from "@/components/CategoryCombobox";
 import { useTenantId } from "@/store/tenant";
+import { slugify } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/products/$id")({
   component: EditProduct,
@@ -39,18 +40,20 @@ function EditProduct() {
   const tenantId = useTenantId();
 
   const [name, setName] = useState("");
+  const [sku, setSku] = useState("");
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [sizes, setSizes] = useState<string[]>([]);
   const [stock, setStock] = useState("");
-  const [imageColor, setImageColor] = useState("#1A1714");
+  const [imageColor, setImageColor] = useState("#3D7A8A");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   // Populate form once product loads
   useEffect(() => {
     if (!product) return;
     setName(product.name);
+    setSku(product.id);
     setCategory(product.category);
     setPrice(String(product.price));
     setDescription(product.description);
@@ -66,18 +69,23 @@ function EditProduct() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await updateProduct.mutateAsync({
+      const result = await updateProduct.mutateAsync({
         slug: id,
+        newSlug: sku,
         name: name.trim(),
         description: description.trim(),
         category,
         priceCents: Math.round(parseFloat(price) * 100),
         sizes,
         stock: parseInt(stock) || 0,
-        imageColor: imageColor || "#1A1714",
+        imageColor: imageColor || "#3D7A8A",
         imageUrl,
       });
-      toast.success("Product updated");
+      toast.success(
+        result.id !== id
+          ? "Product updated — SKU changed, its storefront link is now different"
+          : "Product updated",
+      );
       navigate({ to: "/admin/products" });
     } catch (err) {
       toast.error("Failed to update product", {
@@ -132,6 +140,23 @@ function EditProduct() {
             onChange={(e) => setName(e.target.value)}
             required
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="sku">SKU</Label>
+          <Input
+            id="sku"
+            value={sku}
+            onChange={(e) => setSku(e.target.value)}
+            className="font-mono"
+            required
+          />
+          <p className="text-xs text-muted">
+            Auto-generated from the name when the product was created — you
+            can fix a typo here. Changing it changes this product&apos;s
+            storefront link (<code className="font-mono">/product/{sku}</code>),
+            so anyone with the old link will get a &quot;not found&quot; page.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">

@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { ShoppingBag, Search } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { useThemeStore } from "@/store/theme";
@@ -6,16 +6,17 @@ import { useThemeStore } from "@/store/theme";
 const NAV = [
   { to: "/", label: "Home" },
   { to: "/shop", label: "Shop" },
-  { to: "/shop", label: "New" },
-  { to: "/shop", label: "Stories" },
 ];
 
 export function Header() {
   const open = useCart((s) => s.open);
   const count = useCart((s) => s.items.reduce((a, i) => a + i.qty, 0));
   const storeName = useThemeStore((s) => s.storeName);
-  const { pathname } = useLocation();
 
+  // The logo image lives in the hero (bigger, one clear brand moment on
+  // landing) rather than duplicated here too — the sticky header just
+  // uses the store name text, consistent on every page including ones
+  // without a hero.
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-bg/85 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 md:px-8">
@@ -39,15 +40,12 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <button
-            aria-label="Search"
-            className="p-2 text-muted hover:text-text rounded-sm"
-          >
+          <button aria-label="Search" className="p-2 text-muted hover:text-text rounded-sm">
             <Search size={18} />
           </button>
           <button
             onClick={open}
-            aria-label={`Cart, ${count} items`}
+            aria-label={`Cart, ${count} ${count === 1 ? "item" : "items"}`}
             className="relative p-2 text-text rounded-sm hover:bg-surface"
           >
             <ShoppingBag size={18} />
@@ -62,13 +60,6 @@ export function Header() {
           </button>
         </div>
       </div>
-      {pathname === "/" && (
-        <div className="border-t border-border bg-surface">
-          <div className="mx-auto max-w-7xl px-4 md:px-8 py-2 text-center font-mono text-[10px] uppercase tracking-[0.22em] text-muted">
-            Free shipping in Cape Town over R900 · Drop 03 / Autumn ’26
-          </div>
-        </div>
-      )}
     </header>
   );
 }

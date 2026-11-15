@@ -10,7 +10,7 @@ export function ProductCard({ product }: { product: Product }) {
       params={{ id: product.id }}
       className="group block focus:outline-none"
     >
-      <div className="aspect-[4/5] mb-3 overflow-hidden rounded-md">
+      <div className="aspect-square mb-3 overflow-hidden rounded-md">
         <div className="h-full w-full transition-transform duration-500 group-hover:scale-[1.03]">
           <ProductImage
             name={product.name}

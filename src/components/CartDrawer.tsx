@@ -3,12 +3,14 @@ import { Minus, Plus, X } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/cart";
+import { useTenant } from "@/store/tenant";
 import { ProductImage } from "./ProductImage";
 import { formatZAR } from "@/lib/format";
 import { buildQuickCartUrl } from "@/lib/whatsapp";
 
 export function CartDrawer() {
   const { items, isOpen, close, setQty, remove, subtotal } = useCart();
+  const tenant = useTenant();
 
   return (
     <Sheet open={isOpen} onOpenChange={(v) => !v && close()}>
@@ -36,6 +38,7 @@ export function CartDrawer() {
                       name={item.name}
                       category={item.category}
                       color={item.imageColor}
+                      imageUrl={item.imageUrl}
                       size="sm"
                     />
                   </div>
@@ -50,9 +53,11 @@ export function CartDrawer() {
                         <X size={16} />
                       </button>
                     </div>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted mt-0.5">
-                      Size {item.size}
-                    </p>
+                    {item.size !== "Standard" && (
+                      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted mt-0.5">
+                        Size {item.size}
+                      </p>
+                    )}
                     <div className="mt-3 flex items-center justify-between">
                       <div className="flex items-center border border-border rounded-sm">
                         <button
@@ -88,10 +93,14 @@ export function CartDrawer() {
               </span>
               <span className="font-mono font-semibold">{formatZAR(subtotal())}</span>
             </div>
-            <p className="text-xs text-muted">Shipping and VAT calculated at checkout.</p>
-            {/* Primary CTA — full checkout form, saves order to Supabase */}
+            <p className="text-xs text-muted">
+              {tenant?.vat_registered ?? true ? "Price includes VAT. " : ""}{(tenant?.content?.shipping_fee ?? 0) > 0 ? "Delivery added at checkout." : "Free delivery."}
+            </p>
+            {/* Primary CTA — full checkout form, saves order to Supabase.
+                checkout.tsx offers both "Pay by card" and "Place order via
+                WhatsApp" there, so this button stays payment-method-neutral. */}
             <Button asChild className="w-full" size="lg" onClick={close}>
-              <Link to="/checkout">Place order via WhatsApp</Link>
+              <Link to="/checkout">Proceed to checkout</Link>
             </Button>
             {/* Quick shortcut — skips the form, sends basket items directly */}
             <button
@@ -99,6 +108,9 @@ export function CartDrawer() {
               onClick={() => {
                 const url = buildQuickCartUrl(
                   items.map((i) => ({ name: i.name, size: i.size, qty: i.qty, price: i.price })),
+                  tenant?.whatsapp_number,
+                  tenant?.vat_registered ?? true,
+                  tenant?.content?.shipping_fee ?? 0,
                 );
                 window.open(url, "_blank", "noopener,noreferrer");
               }}

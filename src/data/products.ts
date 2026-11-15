@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase, type ProductRow } from "@/lib/supabase";
 import { useTenantId } from "@/store/tenant";
+import { slugify } from "@/lib/utils";
 
 // =========================================================================
 // App-level Product type. Kept identical to what the rest of the app
@@ -34,7 +35,7 @@ function mapProduct(row: ProductRow): Product {
     description: row.description ?? "",
     sizes: row.sizes ?? [],
     stock: row.stock,
-    imageColor: row.image_color ?? "#1A1714",
+    imageColor: row.image_color ?? "#3D7A8A",
     imageUrl: row.image_url ?? null,
   };
 }
@@ -66,15 +67,6 @@ export function useProducts() {
 // Mutations
 // =========================================================================
 
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
-
 export type CreateProductInput = {
   name: string;
   description: string;
@@ -87,7 +79,8 @@ export type CreateProductInput = {
 };
 
 export type UpdateProductInput = Partial<Omit<CreateProductInput, "name">> & {
-  slug: string;
+  slug: string; // current slug — identifies which row to update
+  newSlug?: string; // optional — renames the slug/SKU itself
   name?: string;
   imageUrl?: string | null;
 };
@@ -121,12 +114,12 @@ export function useCreateProduct() {
   });
 }
 
-/** Update an existing product by slug. */
+/** Update an existing product by slug. Optionally renames the slug/SKU itself. */
 export function useUpdateProduct() {
   const tenantId = useTenantId();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ slug, ...input }: UpdateProductInput) => {
+    mutationFn: async ({ slug, newSlug, ...input }: UpdateProductInput) => {
       if (!tenantId) throw new Error("No tenant resolved");
       const updates: Record<string, unknown> = {};
       if (input.name !== undefined) updates.name = input.name;
@@ -137,12 +130,16 @@ export function useUpdateProduct() {
       if (input.stock !== undefined) updates.stock = input.stock;
       if (input.imageColor !== undefined) updates.image_color = input.imageColor || null;
       if (input.imageUrl !== undefined) updates.image_url = input.imageUrl ?? null;
+      const cleanNewSlug = newSlug ? slugify(newSlug) : undefined;
+      if (cleanNewSlug && cleanNewSlug !== slug) updates.slug = cleanNewSlug;
       const { error } = await supabase
         .from("products")
         .update(updates)
         .eq("tenant_id", tenantId)
         .eq("slug", slug);
       if (error) throw error;
+      // Return the id the caller should now use (changed if renamed).
+      return { id: cleanNewSlug && cleanNewSlug !== slug ? cleanNewSlug : slug };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products", tenantId] });

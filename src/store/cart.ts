@@ -8,6 +8,7 @@ export type CartItem = {
   qty: number;
   price: number;
   imageColor: string;
+  imageUrl?: string | null;
   category: string;
 };
 
@@ -58,9 +59,30 @@ export const useCart = create<CartState>()(
       subtotal: () => get().items.reduce((acc, i) => acc + i.price * i.qty, 0),
       count: () => get().items.reduce((acc, i) => acc + i.qty, 0),
     }),
-    { name: "shop4u-cart", partialize: (s) => ({ items: s.items }) },
+    { name: "youcommerce-cart", partialize: (s) => ({ items: s.items }) },
   ),
 );
 
-export const SHIPPING_FLAT = 75;
 export const VAT_RATE = 0.15;
+
+/**
+ * Order totals — VAT-inclusive by default.
+ *
+ * Listed product prices already include VAT (the SA retail convention:
+ * the sticker price is what the customer pays). VAT is never added on
+ * top at checkout — it's only ever *extracted* from the inclusive total
+ * for display/record-keeping, using total × rate / (1 + rate).
+ *
+ * If the tenant isn't VAT-registered, they can't legally charge VAT at
+ * all: `vatRegistered = false` skips the VAT line entirely and the
+ * listed price is simply the price, full stop.
+ */
+export function calcOrderTotals(
+  subtotal: number,
+  shipping: number,
+  vatRegistered: boolean,
+) {
+  const total = subtotal + shipping; // already inclusive — no add-on
+  const vat = vatRegistered ? Math.round(total * (VAT_RATE / (1 + VAT_RATE))) : 0;
+  return { subtotal, shipping, vat, total };
+}

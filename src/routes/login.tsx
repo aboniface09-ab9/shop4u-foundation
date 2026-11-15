@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 /**
- * /login — merchant sign-in. Shop4U-branded (not the demo tenant's
+ * /login — merchant sign-in. YouCommerce-branded (not the demo tenant's
  * brand) since this is the platform's login page, not a per-merchant
  * customer login.
  *
@@ -57,8 +57,8 @@ function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-bg px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
-          <Link to="/" className="font-heading text-2xl font-bold">
-            Shop4U<span className="text-primary">.</span>
+          <Link to="/" className="inline-block rounded-md bg-[#031c3b] px-5 py-3">
+            <img src="/logo.png" alt="YouCommerce" className="h-9 mx-auto" />
           </Link>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted mt-2">
             Merchant console
@@ -90,6 +90,11 @@ function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <div className="text-right">
+              <Link to="/reset-password" className="text-xs text-muted hover:text-text">
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           {error && (

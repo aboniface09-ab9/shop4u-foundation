@@ -32,14 +32,14 @@ export function ProductImage({
       <div
         aria-hidden
         className={cn(
-          "relative w-full h-full overflow-hidden rounded-md bg-surface",
+          "relative w-full h-full overflow-hidden rounded-md",
           className,
         )}
       >
         <img
           src={imageUrl}
           alt={name}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain rounded-md"
           loading="lazy"
         />
       </div>

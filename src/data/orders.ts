@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { generateOrderRef } from "@/lib/order-ref";
 
 import {
   supabase,
@@ -115,9 +116,9 @@ export function useCreateOrder() {
     mutationFn: async (input: CreateOrderInput): Promise<Order> => {
       if (!tenantId) throw new Error("No tenant resolved");
 
-      // Compact, sortable-ish reference that doesn't require a SELECT
-      // to generate. e.g. "FND-LX2N9K". Collision-resistant in practice.
-      const orderNumber = `FND-${Date.now().toString(36).toUpperCase()}`;
+      // Random, unguessable reference (the order status page is public by reference, so the
+      // reference must not be enumerable). Doesn't need a SELECT to generate. e.g. "FND-7KQ2M9XD4WPA".
+      const orderNumber = generateOrderRef();
 
       const items: OrderItemJson[] = input.items.map((i) => ({
         product_slug: i.productSlug,

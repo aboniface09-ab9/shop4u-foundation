@@ -10,7 +10,7 @@
  */
 
 import { formatZAR } from "@/lib/format";
-import { SHIPPING_FLAT, VAT_RATE } from "@/store/cart";
+import { calcOrderTotals } from "@/store/cart";
 
 export type WhatsAppOrderInput = {
   orderRef?: string; // e.g. "ONX-1043" — optional if called before Supabase order is created
@@ -32,15 +32,24 @@ export type WhatsAppOrderInput = {
     postal: string;
     province: string;
   };
+  /** Tenant's own WhatsApp number (international format, no +). Falls back to the env var. */
+  whatsappNumber?: string | null;
+  /** Defaults to true — pass the tenant's vat_registered flag. */
+  vatRegistered?: boolean;
+  /** Delivery fee in rand for this order. Defaults to 0. */
+  shippingFee?: number;
 };
 
-const SHOP_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER ?? "27000000000";
+const FALLBACK_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER ?? "27000000000";
 
 export function buildWhatsAppUrl(input: WhatsAppOrderInput): string {
+  const shopWhatsapp = input.whatsappNumber || FALLBACK_WHATSAPP;
+  const vatRegistered = input.vatRegistered ?? true;
   const sub = input.items.reduce((acc, i) => acc + i.price * i.qty, 0);
-  const shipping = SHIPPING_FLAT;
-  const vat = Math.round((sub + shipping) * VAT_RATE);
-  const total = sub + shipping + vat;
+  const shipping = input.shippingFee ?? 0;
+  // Listed prices are VAT-inclusive — VAT is extracted for display, never
+  // added on top. Not-VAT-registered tenants skip the VAT line entirely.
+  const { vat, total } = calcOrderTotals(sub, shipping, vatRegistered);
 
   const lines: string[] = [];
 
@@ -54,14 +63,17 @@ export function buildWhatsAppUrl(input: WhatsAppOrderInput): string {
 
   lines.push("*Items:*");
   for (const item of input.items) {
-    lines.push(`• ${item.name} (Size ${item.size}) × ${item.qty}  —  ${formatZAR(item.price * item.qty)}`);
+    const sizeLabel = item.size && item.size !== "Standard" ? ` (Size ${item.size})` : "";
+    lines.push(`• ${item.name}${sizeLabel} × ${item.qty}  —  ${formatZAR(item.price * item.qty)}`);
   }
   lines.push("");
 
   lines.push(`Subtotal:  ${formatZAR(sub)}`);
-  lines.push(`Shipping:  ${formatZAR(shipping)}`);
-  lines.push(`VAT (15%): ${formatZAR(vat)}`);
+  lines.push(`Delivery:  ${shipping > 0 ? formatZAR(shipping) : "Free"}`);
   lines.push(`*Total:    ${formatZAR(total)}*`);
+  if (vatRegistered) {
+    lines.push(`(Includes VAT (15%): ${formatZAR(vat)})`);
+  }
 
   if (input.customer) {
     lines.push("");
@@ -79,12 +91,15 @@ export function buildWhatsAppUrl(input: WhatsAppOrderInput): string {
   }
 
   const message = lines.join("\n");
-  return `https://wa.me/${SHOP_WHATSAPP}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${shopWhatsapp}?text=${encodeURIComponent(message)}`;
 }
 
 /** Quick cart-only link — no customer details, used from the cart drawer. */
 export function buildQuickCartUrl(
   items: Array<{ name: string; size: string; qty: number; price: number }>,
+  whatsappNumber?: string | null,
+  vatRegistered?: boolean,
+  shippingFee?: number,
 ): string {
-  return buildWhatsAppUrl({ items });
+  return buildWhatsAppUrl({ items, whatsappNumber, vatRegistered, shippingFee });
 }
