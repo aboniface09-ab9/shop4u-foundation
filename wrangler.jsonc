@@ -17,5 +17,12 @@
   // Handled by the `scheduled` export in src/server.ts.
   "triggers": {
     "crons": ["0 4 * * *"]
+  },
+  // Plain (non-secret) settings. PORTAL_ORIGIN is the address used in the private quote and invoice
+  // links emailed to clients, so they always point at the portal host whichever address you were on
+  // when you pressed Send. Secrets (BREVO_*, SUPABASE_SERVICE_ROLE_KEY, ...) are NOT set here:
+  // they are set with `wrangler secret put`.
+  "vars": {
+    "PORTAL_ORIGIN": "https://portal.youcommerce.co.za"
   }
 }
