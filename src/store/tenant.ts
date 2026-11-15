@@ -59,7 +59,7 @@ export function useTenantQuery(slug: string, isAdmin: boolean) {
           .limit(1)
           .single();
         if (error) throw error;
-        const tenant = (data as { tenant: TenantRow | null })?.tenant;
+        const tenant = (data as unknown as { tenant: TenantRow | null })?.tenant;
         if (!tenant) {
           throw new Error("User is not linked to any tenant. Contact platform admin.");
         }

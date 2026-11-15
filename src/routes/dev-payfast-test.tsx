@@ -1,3 +1,4 @@
+import { assertDevRoutesEnabled } from "@/lib/dev-routes";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -39,6 +40,7 @@ import { formatZAR } from "@/lib/format";
  */
 
 export const Route = createFileRoute("/dev-payfast-test")({
+  beforeLoad: assertDevRoutesEnabled,
   component: DevPayfastTest,
 });
 

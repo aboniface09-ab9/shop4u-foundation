@@ -1,3 +1,4 @@
+import { assertDevRoutesEnabled } from "@/lib/dev-routes";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
@@ -30,6 +31,7 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/mock-gateway/$ref")({
+  beforeLoad: assertDevRoutesEnabled,
   validateSearch: searchSchema,
   component: MockGateway,
 });

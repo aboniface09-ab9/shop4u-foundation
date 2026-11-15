@@ -3,6 +3,7 @@ import { chargeSubscriptionAdhoc } from "./recurring-api";
 import { mapPayfastStatusToOrderStatus, type PlatformPayfastConfig } from "./types";
 import { getSupabaseAdmin } from "../supabase-admin";
 import { resolveTenantSlug } from "@/lib/tenant-slug";
+import { isSameOriginUrl } from "./url-guard";
 
 // Plan pricing, used ONLY to lock in a monthly amount at the moment a
 // merchant signs up for billing (subscriptions.monthly_amount_cents is
@@ -87,6 +88,10 @@ export async function handleCheckoutFields(
 
   if (!body.orderReference || !body.amountCents || !body.returnUrl || !body.cancelUrl) {
     return new Response("Missing required fields", { status: 400 });
+  }
+
+  if (!isSameOriginUrl(body.returnUrl, request.url) || !isSameOriginUrl(body.cancelUrl, request.url)) {
+    return new Response("returnUrl and cancelUrl must be on this store's own address", { status: 400 });
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
@@ -174,7 +179,7 @@ export async function handleNotify(
   const mPaymentId = params.get("m_payment_id");
   const merchantId = params.get("merchant_id");
   if (!mPaymentId || !merchantId) {
-    console.error("PayFast ITN missing m_payment_id or merchant_id", { rawBody });
+    console.error("PayFast ITN missing m_payment_id or merchant_id", { fields: [...params.keys()] });
     return new Response("Missing required fields", { status: 400 });
   }
 
@@ -290,6 +295,12 @@ export async function handleSubscriptionCheckoutFields(
     return new Response("Invalid JSON body", { status: 400 });
   }
 
+  if (
+    body.returnUrl && body.cancelUrl &&
+    (!isSameOriginUrl(body.returnUrl, request.url) || !isSameOriginUrl(body.cancelUrl, request.url))
+  ) {
+    return new Response("returnUrl and cancelUrl must be on this store's own address", { status: 400 });
+  }
   if (!body.itemName || !body.returnUrl || !body.cancelUrl || body.amountCents === undefined) {
     return new Response("Missing required fields", { status: 400 });
   }
@@ -355,7 +366,7 @@ export async function handleSubscriptionNotify(
   const token = params.get("token");
 
   if (!tenantSlug || !token) {
-    console.error("PayFast subscription ITN missing custom_str1 (tenant slug) or token", { rawBody });
+    console.error("PayFast subscription ITN missing custom_str1 (tenant slug) or token", { fields: [...params.keys()] });
     return new Response("Missing required fields", { status: 400 });
   }
 
