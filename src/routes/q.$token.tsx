@@ -141,6 +141,7 @@ function QuoteView({
   const t = computeTotals(doc.lines, {
     depositPercent: doc.deposit_percent,
     vatRateBps: doc.vat_rate_bps,
+    discountPercent: doc.discount_percent,
   });
   const hasVat = doc.vat_rate_bps > 0;
   const open = doc.status === "sent" || doc.status === "viewed";
@@ -180,6 +181,20 @@ function QuoteView({
           <span>{kind === "monthly" ? "Total per month" : "Total once-off build"}</span>
           <span className="font-mono">{formatCents(sum)}</span>
         </div>
+        {kind === "once_off" && t.discountCents > 0 && (
+          <>
+            <div className="flex justify-between px-4 pb-2 text-sm" style={{ color: "#0e9e8f" }}>
+              <span>
+                {doc.discount_label || "Discount"} ({doc.discount_percent}% off)
+              </span>
+              <span className="font-mono">-{formatCents(t.discountCents)}</span>
+            </div>
+            <div className="flex justify-between border-t border-border px-4 py-3 font-semibold">
+              <span>Once-off total after discount</span>
+              <span className="font-mono">{formatCents(t.onceOffNetCents)}</span>
+            </div>
+          </>
+        )}
       </section>
     );
   };

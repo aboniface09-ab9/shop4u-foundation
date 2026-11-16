@@ -96,6 +96,8 @@ describe("buildQuoteDocument", () => {
         valid_until: "2026-12-12",
         deposit_percent: 50,
         vat_rate_bps: 0,
+        discount_percent: 0,
+        discount_label: "",
         intro: "",
         terms: "",
         accepted_name: null,
@@ -123,6 +125,8 @@ describe("buildQuoteDocument", () => {
         ...({ account_number: "123456" } as object),
       } as never,
     );
+    expect(doc.discount_percent).toBe(0);
+    expect(doc.discount_label).toBe("");
     expect(JSON.stringify(doc)).not.toContain("secret-line-id");
     expect(JSON.stringify(doc)).not.toContain("123456");
     expect(doc.lines[0].unit_price_cents).toBe(500000);

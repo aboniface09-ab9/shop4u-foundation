@@ -6,6 +6,7 @@ import type {
   BusinessSettingsInput,
   LineKind,
   PriceItemInput,
+  QuoteDiscountInput,
   QuoteLineInput,
   QuoteSettingsInput,
 } from "@/lib/schemas/quotes";
@@ -36,6 +37,8 @@ export type QuoteRow = {
   valid_until: string;
   deposit_percent: number;
   vat_rate_bps: number;
+  discount_percent: number;
+  discount_label: string;
   intro: string;
   terms: string;
   created_at: string;
@@ -247,6 +250,18 @@ export function useUpdateQuote(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: QuoteSettingsInput) => {
+      const { error } = await supabase.from("quotes").update(input).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["quotes"] }),
+  });
+}
+
+/** Saves ONLY the discount fields, so it can never disturb the terms (and vice versa). */
+export function useUpdateQuoteDiscount(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: QuoteDiscountInput) => {
       const { error } = await supabase.from("quotes").update(input).eq("id", id);
       if (error) throw error;
     },

@@ -18,6 +18,8 @@ const doc: QuoteDocument = {
   valid_until: "2026-12-12",
   deposit_percent: 50,
   vat_rate_bps: 0,
+  discount_percent: 0,
+  discount_label: "",
   intro: "Thank you for the opportunity.",
   terms: "All prices are in South African Rand.\nDeposit on acceptance.",
   accepted_name: null,
@@ -64,6 +66,21 @@ describe("renderQuotePdf", () => {
       accepted_at: "2026-11-15T10:00:00Z",
     };
     await expect(renderQuotePdf(odd)).resolves.toBeInstanceOf(Uint8Array);
+  });
+});
+
+describe("renderQuotePdf with a discount", () => {
+  it("renders a discounted quote, with and without VAT and a label", async () => {
+    for (const extra of [
+      { discount_percent: 15, discount_label: "Referral discount" },
+      { discount_percent: 15, discount_label: "" },
+      { discount_percent: 100, discount_label: "Launch offer" },
+      { discount_percent: 15, discount_label: "Referral discount", vat_rate_bps: 1500 },
+      { discount_percent: 10, discount_label: "\u201cFriends\u201d \u2013 \u4f60\u597d" },
+    ]) {
+      const bytes = await renderQuotePdf({ ...doc, ...extra });
+      expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe("%PDF-");
+    }
   });
 });
 

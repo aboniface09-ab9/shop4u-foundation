@@ -28,12 +28,18 @@ import {
   useSendQuote,
   useUpdateLine,
   useUpdateQuote,
+  useUpdateQuoteDiscount,
   type QuoteLineRow,
   type QuoteRow,
 } from "@/data/quotes";
 import { computeTotals, formatCents, lineTotalCents } from "@/lib/money";
 import { centsToRandInput, randToCents } from "@/lib/money-input";
-import { LINE_KINDS, quoteLineSchema, quoteSettingsSchema } from "@/lib/schemas/quotes";
+import {
+  LINE_KINDS,
+  quoteDiscountSchema,
+  quoteLineSchema,
+  quoteSettingsSchema,
+} from "@/lib/schemas/quotes";
 
 export const Route = createFileRoute("/platform/quotes/$id")({
   component: QuoteBuilder,
@@ -77,6 +83,7 @@ function QuoteBuilder() {
       )}
 
       <LinesPanel quote={quote} lines={lines} locked={locked} />
+      <DiscountPanel quote={quote} lines={lines} locked={locked} />
       <TotalsPanel quote={quote} lines={lines} />
       <SettingsPanel quote={quote} locked={locked} />
       <SendPanel quote={quote} lineCount={lines.length} />
@@ -318,13 +325,26 @@ function TotalsPanel({ quote, lines }: { quote: QuoteRow; lines: QuoteLineRow[] 
       computeTotals(lines, {
         depositPercent: quote.deposit_percent,
         vatRateBps: quote.vat_rate_bps,
+        discountPercent: quote.discount_percent,
       }),
-    [lines, quote.deposit_percent, quote.vat_rate_bps],
+    [lines, quote.deposit_percent, quote.vat_rate_bps, quote.discount_percent],
   );
   const hasVat = quote.vat_rate_bps > 0;
+  const hasDiscount = t.discountCents > 0;
+  const discountName = quote.discount_label.trim() || "Discount";
 
-  const rows: { label: string; value: number; strong?: boolean }[] = [
-    { label: "Total once-off build (ex VAT)", value: t.onceOffCents, strong: true },
+  const rows: { label: string; value: number; strong?: boolean; negative?: boolean }[] = [
+    { label: "Total once-off build (ex VAT)", value: t.onceOffCents, strong: !hasDiscount },
+    ...(hasDiscount
+      ? [
+          {
+            label: `${discountName} (${quote.discount_percent}% off)`,
+            value: t.discountCents,
+            negative: true,
+          },
+          { label: "Once-off total after discount", value: t.onceOffNetCents, strong: true },
+        ]
+      : []),
     { label: `Deposit on acceptance (${quote.deposit_percent}%)`, value: t.depositCents },
     { label: "Balance on launch", value: t.balanceCents },
     { label: "Monthly hosting and maintenance (ex VAT)", value: t.monthlyCents, strong: true },
@@ -337,7 +357,10 @@ function TotalsPanel({ quote, lines }: { quote: QuoteRow; lines: QuoteLineRow[] 
         {rows.map((r) => (
           <div key={r.label} className="flex justify-between gap-4">
             <dt className={r.strong ? "font-medium" : "text-muted"}>{r.label}</dt>
-            <dd className="font-mono">{formatCents(r.value)}</dd>
+            <dd className="font-mono">
+              {r.negative ? "-" : ""}
+              {formatCents(r.value)}
+            </dd>
           </div>
         ))}
       </dl>
@@ -345,6 +368,124 @@ function TotalsPanel({ quote, lines }: { quote: QuoteRow; lines: QuoteLineRow[] 
         {hasVat
           ? `VAT at ${(quote.vat_rate_bps / 100).toFixed(0)}% is added to invoices: deposit ${formatCents(t.incl.deposit)}, monthly ${formatCents(t.incl.monthly)}.`
           : "No VAT is charged on this quote."}
+      </p>
+    </Panel>
+  );
+}
+
+function DiscountPanel({
+  quote,
+  lines,
+  locked,
+}: {
+  quote: QuoteRow;
+  lines: QuoteLineRow[];
+  locked: boolean;
+}) {
+  const update = useUpdateQuoteDiscount(quote.id);
+  const [percent, setPercent] = useState(
+    quote.discount_percent ? String(quote.discount_percent) : "",
+  );
+  const [label, setLabel] = useState(quote.discount_label);
+  const [errors, setErrors] = useState<FieldErrors>({});
+
+  // Live preview of what the typed percentage would do, before it is saved.
+  const typed = quoteDiscountSchema.shape.discount_percent.safeParse(percent);
+  const preview = useMemo(
+    () =>
+      computeTotals(lines, {
+        depositPercent: quote.deposit_percent,
+        vatRateBps: quote.vat_rate_bps,
+        discountPercent: typed.success ? typed.data : 0,
+      }),
+    [lines, quote.deposit_percent, quote.vat_rate_bps, typed],
+  );
+  const dirty =
+    percent !== (quote.discount_percent ? String(quote.discount_percent) : "") ||
+    label !== quote.discount_label;
+
+  if (locked) {
+    return (
+      <Panel title="Discount">
+        <p className="text-sm text-muted">
+          {quote.discount_percent > 0
+            ? `${quote.discount_label.trim() || "Discount"} (${quote.discount_percent}% off the once-off build) is part of this quote.`
+            : "No discount on this quote."}
+        </p>
+      </Panel>
+    );
+  }
+
+  return (
+    <Panel title="Discount (optional)">
+      <form
+        noValidate
+        className="grid gap-4 md:grid-cols-[8rem_1fr_auto] md:items-end"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const parsed = quoteDiscountSchema.safeParse({
+            discount_percent: percent,
+            discount_label: label,
+          });
+          if (!parsed.success) return setErrors(zodFieldErrors(parsed.error));
+          setErrors({});
+          update.mutate(parsed.data, {
+            onSuccess: () => {
+              setPercent(parsed.data.discount_percent ? String(parsed.data.discount_percent) : "");
+              setLabel(parsed.data.discount_label);
+              toast.success(parsed.data.discount_percent ? "Discount applied" : "Discount removed");
+            },
+            onError: (err) =>
+              toast.error("Couldn't save the discount", { description: err.message }),
+          });
+        }}
+      >
+        <Field label="Discount %" name="discount_percent" error={errors.discount_percent}>
+          <Input
+            id="discount_percent"
+            name="discount_percent"
+            inputMode="numeric"
+            placeholder="0"
+            value={percent}
+            onChange={(e) => setPercent(e.target.value)}
+          />
+        </Field>
+        <Field
+          label="Shown to the client as"
+          name="discount_label"
+          error={errors.discount_label}
+          hint="For example: Referral discount. Leave blank to show just “Discount”."
+        >
+          <Input
+            id="discount_label"
+            name="discount_label"
+            maxLength={100}
+            placeholder="Referral discount"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+          />
+        </Field>
+        <Button type="submit" variant="outline" disabled={update.isPending || !dirty}>
+          {update.isPending ? "Saving…" : "Save discount"}
+        </Button>
+      </form>
+
+      <p className="mt-3 text-sm" aria-live="polite">
+        {!typed.success ? (
+          <span className="text-danger">{typed.error.issues[0]?.message}</span>
+        ) : preview.discountCents > 0 ? (
+          <>
+            {typed.data}% off {formatCents(preview.onceOffCents)} saves the client{" "}
+            <strong>{formatCents(preview.discountCents)}</strong>, so the once-off build becomes{" "}
+            <strong>{formatCents(preview.onceOffNetCents)}</strong>.
+          </>
+        ) : (
+          <span className="text-muted">No discount. Type a percentage to see its effect here.</span>
+        )}
+      </p>
+      <p className="mt-1 text-xs text-muted">
+        Comes off the once-off build only, never the monthly fee. The deposit and balance are worked
+        out on the discounted amount.
       </p>
     </Panel>
   );

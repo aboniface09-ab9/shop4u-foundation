@@ -48,6 +48,22 @@ export const quoteSettingsSchema = z.object({
 });
 export type QuoteSettingsInput = z.infer<typeof quoteSettingsSchema>;
 
+/**
+ * The discount is edited on its own (its own panel and its own save), never as part of the Terms form,
+ * so saving the terms can't reset it. A percentage off the once-off build only (never the monthly fee);
+ * blank means none. The label is what the client sees next to it, e.g. "Referral discount".
+ */
+export const quoteDiscountSchema = z.object({
+  discount_percent: z.coerce
+    .number({ invalid_type_error: "Enter a whole number, like 15" })
+    .int("Whole number, like 15")
+    .min(0, "Between 0 and 100")
+    .max(100, "Between 0 and 100")
+    .default(0),
+  discount_label: lineText(100),
+});
+export type QuoteDiscountInput = z.infer<typeof quoteDiscountSchema>;
+
 export const businessSettingsSchema = z.object({
   legal_name: clean(z.string().trim().min(1, "Legal name is required").max(200)),
   registration_number: lineText(50),

@@ -1,6 +1,33 @@
 import { describe, expect, it } from "vitest";
 
-import { bundle, stripTransactionControl } from "../../scripts/bundle-migrations";
+import { bundle, onlyFrom, stripTransactionControl } from "../../scripts/bundle-migrations";
+
+describe("onlyFrom (bundle just the new migration for a database that already has the old ones)", () => {
+  const files = [
+    { name: "20261115000008_lock_down_orders.sql" },
+    { name: "20261115000009_quote_discount.sql" },
+    { name: "20261115000010_next_thing.sql" },
+    { name: "20261115000001_security_hardening.sql" },
+  ];
+  it("keeps everything when no starting point is given", () => {
+    expect(onlyFrom(files)).toHaveLength(4);
+  });
+  it("keeps only migrations at or after the given id", () => {
+    expect(onlyFrom(files, "20261115000009").map((f) => f.name)).toEqual([
+      "20261115000009_quote_discount.sql",
+      "20261115000010_next_thing.sql",
+    ]);
+  });
+  it("never includes an older migration (re-running one would fail on a live database)", () => {
+    const names = onlyFrom(files, "20261115000009").map((f) => f.name);
+    expect(names.some((n) => n.startsWith("20261115000008"))).toBe(false);
+    expect(names.some((n) => n.startsWith("20261115000001"))).toBe(false);
+  });
+  it("rejects a starting point that is not digits", () => {
+    expect(() => onlyFrom(files, "latest")).toThrow();
+    expect(() => onlyFrom(files, "../etc")).toThrow();
+  });
+});
 
 describe("stripTransactionControl", () => {
   it("removes standalone BEGIN/COMMIT lines only", () => {

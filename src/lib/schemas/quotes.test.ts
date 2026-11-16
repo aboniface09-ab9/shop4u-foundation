@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   businessSettingsSchema,
   priceItemSchema,
+  quoteDiscountSchema,
   quoteLineSchema,
   quoteSettingsSchema,
 } from "./quotes";
@@ -141,5 +142,39 @@ describe("pasted text with invisible characters (settings and price list)", () =
       terms,
     });
     expect(q.terms).toBe(terms);
+  });
+});
+
+describe("quoteDiscountSchema", () => {
+  it("blank means no discount, and a whole percentage between 0 and 100 is accepted", () => {
+    expect(
+      quoteDiscountSchema.parse({ discount_percent: "", discount_label: "" }).discount_percent,
+    ).toBe(0);
+    expect(quoteDiscountSchema.parse({}).discount_percent).toBe(0);
+    expect(quoteDiscountSchema.parse({ discount_percent: "15" }).discount_percent).toBe(15);
+    expect(quoteDiscountSchema.parse({ discount_percent: "0" }).discount_percent).toBe(0);
+    expect(quoteDiscountSchema.parse({ discount_percent: "100" }).discount_percent).toBe(100);
+  });
+  it("rejects negatives, over 100, decimals and text", () => {
+    for (const bad of ["-1", "101", "15.5", "abc", "10%"]) {
+      expect(quoteDiscountSchema.safeParse({ discount_percent: bad }).success, bad).toBe(false);
+    }
+  });
+  it("trims and cleans the label, and caps its length", () => {
+    const r = quoteDiscountSchema.parse({
+      discount_percent: "10",
+      discount_label: "\u200e Referral discount \u200b",
+    });
+    expect(r.discount_label).toBe("Referral discount");
+    expect(quoteDiscountSchema.safeParse({ discount_label: "x".repeat(101) }).success).toBe(false);
+  });
+  it("is separate from the terms schema, so saving the terms can never reset the discount", () => {
+    const terms = quoteSettingsSchema.parse({
+      valid_until: "2026-12-12",
+      deposit_percent: "50",
+      vat_rate_bps: "0",
+    });
+    expect("discount_percent" in terms).toBe(false);
+    expect("discount_label" in terms).toBe(false);
   });
 });

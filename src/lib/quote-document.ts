@@ -7,6 +7,8 @@ export type QuoteDocument = {
   valid_until: string;
   deposit_percent: number;
   vat_rate_bps: number;
+  discount_percent: number;
+  discount_label: string;
   intro: string;
   terms: string;
   accepted_name: string | null;

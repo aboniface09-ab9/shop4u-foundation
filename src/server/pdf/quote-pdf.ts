@@ -88,9 +88,15 @@ export async function renderQuotePdf(doc: QuoteDocument): Promise<Uint8Array> {
   };
   const text = (s: string, x: number, size = 10, f: PDFFont = font, color = rgb(0, 0, 0)) =>
     page.drawText(safeText(s), { x, y, size, font: f, color });
-  const textRight = (s: string, xRight: number, size = 10, f: PDFFont = font) => {
+  const textRight = (
+    s: string,
+    xRight: number,
+    size = 10,
+    f: PDFFont = font,
+    color = rgb(0, 0, 0),
+  ) => {
     const t = safeText(s);
-    page.drawText(t, { x: xRight - f.widthOfTextAtSize(t, size), y, size, font: f });
+    page.drawText(t, { x: xRight - f.widthOfTextAtSize(t, size), y, size, font: f, color });
   };
   const paragraph = (s: string, size = 10, color = rgb(0, 0, 0), width = PAGE_W - MARGIN * 2) => {
     for (const l of wrap(s, font, size, width)) {
@@ -143,6 +149,12 @@ export async function renderQuotePdf(doc: QuoteDocument): Promise<Uint8Array> {
     y -= 6;
   }
 
+  const t = computeTotals(doc.lines, {
+    depositPercent: doc.deposit_percent,
+    vatRateBps: doc.vat_rate_bps,
+    discountPercent: doc.discount_percent,
+  });
+
   const xQty = PAGE_W - MARGIN - 150;
   const xUnit = PAGE_W - MARGIN - 80;
   const xTotal = PAGE_W - MARGIN;
@@ -192,18 +204,30 @@ export async function renderQuotePdf(doc: QuoteDocument): Promise<Uint8Array> {
       y -= 10;
     }
     const sum = rows.reduce((a, l) => a + lineTotalCents(l), 0);
+    const showDiscount = kind === "once_off" && t.discountCents > 0;
+    if (showDiscount) ensure(70);
     text(totalLabel, MARGIN + 6, 10, bold);
     textRight(money(sum), xTotal - 4, 10, bold);
+    if (showDiscount) {
+      y -= 16;
+      text(
+        `${doc.discount_label || "Discount"} (${doc.discount_percent}% off)`,
+        MARGIN + 6,
+        10,
+        font,
+        TEAL,
+      );
+      textRight(`-${money(t.discountCents)}`, xTotal - 4, 10, font, TEAL);
+      y -= 16;
+      text("Once-off total after discount", MARGIN + 6, 10, bold);
+      textRight(money(t.onceOffNetCents), xTotal - 4, 10, bold);
+    }
     y -= 26;
   };
 
   section("Once-off build", "once_off", "Total once-off build");
   section("Monthly hosting and maintenance", "monthly", "Total per month");
 
-  const t = computeTotals(doc.lines, {
-    depositPercent: doc.deposit_percent,
-    vatRateBps: doc.vat_rate_bps,
-  });
   ensure(110);
   text("Payment terms", MARGIN, 12, bold, NAVY);
   y -= 18;

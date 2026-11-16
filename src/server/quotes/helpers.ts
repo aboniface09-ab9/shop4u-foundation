@@ -42,6 +42,8 @@ type DbQuote = {
   valid_until: string;
   deposit_percent: number;
   vat_rate_bps: number;
+  discount_percent: number;
+  discount_label: string;
   intro: string;
   terms: string;
   accepted_name: string | null;
@@ -63,6 +65,8 @@ export function buildQuoteDocument(
     valid_until: quote.valid_until,
     deposit_percent: quote.deposit_percent,
     vat_rate_bps: quote.vat_rate_bps,
+    discount_percent: quote.discount_percent,
+    discount_label: quote.discount_label,
     intro: quote.intro,
     terms: quote.terms,
     accepted_name: quote.accepted_name,

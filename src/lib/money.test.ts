@@ -77,3 +77,65 @@ describe("rounding and edge cases", () => {
     expect(formatCents(2_250_000).replace(/\s/g, "")).toMatch(/^R22500[,.]00$/);
   });
 });
+
+describe("computeTotals: discount on the once-off build", () => {
+  const withDiscount = (discountPercent: number, vatRateBps = 0, depositPercent = 50) =>
+    computeTotals(ufo, { depositPercent, vatRateBps, discountPercent });
+
+  it("15% off the Ultra Fish quote: R22,500 becomes R19,125, deposit and balance R9,562.50 each", () => {
+    const t = withDiscount(15);
+    expect(t.onceOffCents).toBe(2_250_000); // before discount, unchanged
+    expect(t.discountCents).toBe(337_500); // R3,375
+    expect(t.onceOffNetCents).toBe(1_912_500); // R19,125
+    expect(t.depositCents).toBe(956_250); // R9,562.50
+    expect(t.balanceCents).toBe(956_250); // R9,562.50
+    expect(t.firstYearCents).toBe(2_812_500); // R19,125 + 12 x R750 = R28,125
+  });
+
+  it("never discounts the monthly fee", () => {
+    expect(withDiscount(15).monthlyCents).toBe(75_000);
+    expect(withDiscount(100).monthlyCents).toBe(75_000);
+    expect(withDiscount(100).onceOffNetCents).toBe(0);
+    expect(withDiscount(100).firstYearCents).toBe(900_000); // 12 x R750 only
+  });
+
+  it("0% (and no discount supplied at all) behaves exactly as before", () => {
+    const none = computeTotals(ufo, { depositPercent: 50, vatRateBps: 0 });
+    const zero = withDiscount(0);
+    expect(zero).toEqual(none);
+    expect(none.discountCents).toBe(0);
+    expect(none.onceOffNetCents).toBe(none.onceOffCents);
+  });
+
+  it("deposit + balance always equals the discounted once-off total, even with awkward cents", () => {
+    for (const pct of [1, 3, 7, 12, 15, 33, 50, 99]) {
+      const t = computeTotals([once(100_001), monthly(33_333)], {
+        depositPercent: 50,
+        vatRateBps: 0,
+        discountPercent: pct,
+      });
+      expect(t.depositCents + t.balanceCents, `${pct}%`).toBe(t.onceOffNetCents);
+      expect(t.onceOffCents - t.discountCents, `${pct}%`).toBe(t.onceOffNetCents);
+    }
+  });
+
+  it("charges VAT on the discounted amounts, and the VAT split still adds up exactly", () => {
+    const t = withDiscount(15, 1500);
+    expect(t.vat.onceOff).toBe(286_875); // 15% of R19,125 = R2,868.75
+    expect(t.vat.deposit + t.vat.balance).toBe(t.vat.onceOff);
+    expect(t.incl.onceOff).toBe(1_912_500 + 286_875);
+    expect(t.incl.deposit + t.incl.balance).toBe(t.incl.onceOff);
+  });
+
+  it("matches the database rounding (half up on the discount itself)", () => {
+    // 15% of R1,000.01 = 15000.15 cents -> 15000; 15% of 100,003 cents = 15000.45 -> 15000; of 100,004 = 15000.6 -> 15001
+    expect(
+      computeTotals([once(100_001)], { depositPercent: 50, vatRateBps: 0, discountPercent: 15 })
+        .discountCents,
+    ).toBe(15_000);
+    expect(
+      computeTotals([once(100_004)], { depositPercent: 50, vatRateBps: 0, discountPercent: 15 })
+        .discountCents,
+    ).toBe(15_001);
+  });
+});
