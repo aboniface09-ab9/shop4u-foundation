@@ -7,8 +7,24 @@ export const CONTENT_STATUSES = ["requested", "received", "approved", "not_neede
 
 export type ProjectStage = (typeof PROJECT_STAGES)[number];
 
-/** Trimmed text; empty string becomes null so the database stores NULL, not "". */
-const optionalText = (max: number) =>
+/**
+ * Text pasted from WhatsApp, iPhone contacts, Word or a web page often carries invisible formatting
+ * characters (direction marks, zero-width spaces, a byte-order mark) and sometimes full-width digits.
+ * They are invisible, so a value that looks perfect can fail validation. Remove them first and store the
+ * clean value. Applied to single-line fields only; free-text boxes (notes, addresses) are kept exactly as typed.
+ */
+export function cleanPasted(value: unknown): unknown {
+  return typeof value === "string"
+    ? value
+        .normalize("NFKC")
+        .replace(/\p{Cf}/gu, "")
+        .trim()
+    : value;
+}
+const clean = <T extends z.ZodTypeAny>(schema: T) => z.preprocess(cleanPasted, schema);
+
+/** Trimmed text as typed; empty string becomes null so the database stores NULL, not "". */
+const optionalFreeText = (max: number) =>
   z
     .string()
     .trim()
@@ -18,78 +34,89 @@ const optionalText = (max: number) =>
     .optional()
     .transform((v) => v ?? null);
 
-/** Optional https:// URL only (blocks javascript:, http:, relative paths). */
-const optionalHttpsUrl = z
-  .string()
-  .trim()
-  .max(500)
-  .transform((v) => (v === "" ? null : v))
-  .nullable()
-  .optional()
-  .transform((v) => v ?? null)
-  .refine(
-    (v) => {
-      if (v === null) return true;
-      try {
-        return new URL(v).protocol === "https:";
-      } catch {
-        return false;
-      }
-    },
-    { message: "Must be a full https:// address" },
-  );
+/** Single-line optional text, cleaned of invisible pasted characters. */
+const optionalText = (max: number) => clean(optionalFreeText(max));
 
-const optionalDate = z
-  .string()
-  .trim()
-  .transform((v) => (v === "" ? null : v))
-  .nullable()
-  .optional()
-  .transform((v) => v ?? null)
-  .refine((v) => v === null || /^\d{4}-\d{2}-\d{2}$/.test(v), { message: "Use a valid date" });
+/** Optional https:// URL only (blocks javascript:, http:, relative paths). */
+const optionalHttpsUrl = clean(
+  z
+    .string()
+    .trim()
+    .max(500)
+    .transform((v) => (v === "" ? null : v))
+    .nullable()
+    .optional()
+    .transform((v) => v ?? null)
+    .refine(
+      (v) => {
+        if (v === null) return true;
+        try {
+          return new URL(v).protocol === "https:";
+        } catch {
+          return false;
+        }
+      },
+      { message: "Must be a full https:// address" },
+    ),
+);
+
+const optionalDate = clean(
+  z
+    .string()
+    .trim()
+    .transform((v) => (v === "" ? null : v))
+    .nullable()
+    .optional()
+    .transform((v) => v ?? null)
+    .refine((v) => v === null || /^\d{4}-\d{2}-\d{2}$/.test(v), { message: "Use a valid date" }),
+);
 
 export const clientSchema = z.object({
-  company_name: z.string().trim().min(1, "Company name is required").max(200),
+  company_name: clean(z.string().trim().min(1, "Company name is required").max(200)),
   trading_name: optionalText(200),
   vat_number: optionalText(30),
-  billing_address: optionalText(500),
+  billing_address: optionalFreeText(500),
   status: z.enum(CLIENT_STATUSES).default("lead"),
-  notes: optionalText(4000),
+  notes: optionalFreeText(4000),
 });
 export type ClientInput = z.infer<typeof clientSchema>;
 
 export const contactSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(200),
-  email: z
-    .string()
-    .trim()
-    .max(254)
-    .transform((v) => (v === "" ? null : v))
-    .nullable()
-    .optional()
-    .transform((v) => v ?? null)
-    .refine((v) => v === null || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), {
-      message: "Enter a valid email",
-    }),
+  name: clean(z.string().trim().min(1, "Name is required").max(200)),
+  email: clean(
+    z
+      .string()
+      .trim()
+      .max(254)
+      .transform((v) => (v === "" ? null : v))
+      .nullable()
+      .optional()
+      .transform((v) => v ?? null)
+      .refine((v) => v === null || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), {
+        message: "Enter a valid email",
+      }),
+  ),
   // South African-friendly but permissive: digits, spaces, +, -, ( )
-  phone: z
-    .string()
-    .trim()
-    .max(40)
-    .transform((v) => (v === "" ? null : v))
-    .nullable()
-    .optional()
-    .transform((v) => v ?? null)
-    .refine((v) => v === null || /^[0-9+\-()\s]{5,40}$/.test(v), {
-      message: "Enter a valid phone number",
-    }),
+  phone: clean(
+    z
+      .string()
+      .trim()
+      .max(40)
+      .transform((v) => (v === "" ? null : v))
+      .nullable()
+      .optional()
+      .transform((v) => v ?? null)
+      .refine((v) => v === null || /^[0-9+\-()\s]{5,40}$/.test(v), {
+        message: "Enter a valid phone number, e.g. 081 286 7121 or +27 81 286 7121",
+      }),
+  ),
   role: optionalText(100),
   is_primary: z.boolean().default(false),
 });
 export type ContactInput = z.infer<typeof contactSchema>;
 
 export const projectSchema = z.object({
-  name: z.string().trim().min(1, "Project name is required").max(200),
+  name: clean(z.string().trim().min(1, "Project name is required").max(200)),
   repo_url: optionalHttpsUrl,
   staging_url: optionalHttpsUrl,
   production_url: optionalHttpsUrl,
@@ -100,7 +127,7 @@ export const projectSchema = z.object({
   dns_access_status: z.enum(DNS_ACCESS_STATUSES).default("unknown"),
   // Where a credential is kept (e.g. "Password manager: Afrihost - client"). NEVER the credential itself.
   credential_location: optionalText(200),
-  hosting_provider: z.string().trim().min(1).max(100).default("Cloudflare"),
+  hosting_provider: clean(z.string().trim().min(1).max(100)).default("Cloudflare"),
   hosting_plan: optionalText(100),
   hosting_monthly_cents: z
     .number()
@@ -114,7 +141,7 @@ export const projectSchema = z.object({
 export type ProjectInput = z.infer<typeof projectSchema>;
 
 export const contentItemSchema = z.object({
-  item: z.string().trim().min(1, "Item is required").max(200),
+  item: clean(z.string().trim().min(1, "Item is required").max(200)),
   status: z.enum(CONTENT_STATUSES).default("requested"),
   due_date: optionalDate,
   note: optionalText(1000),

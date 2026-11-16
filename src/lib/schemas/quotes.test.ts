@@ -78,3 +78,68 @@ describe("businessSettingsSchema", () => {
     ).toBe(false);
   });
 });
+
+// Same regression as the phone number: values copied from a banking app, WhatsApp or a document carry
+// invisible characters that made strict fields (digits only, email, code) reject a value that looked right.
+describe("pasted text with invisible characters (settings and price list)", () => {
+  const LRM = "‎";
+  const ZWSP = "​";
+  const PDF = "‬";
+  const base = {
+    legal_name: "Example (Pty) Ltd",
+    default_validity_days: "30",
+    default_deposit_percent: "50",
+    default_invoice_due_days: "7",
+  };
+
+  it("accepts and cleans a bank account number, email and branch code", () => {
+    const r = businessSettingsSchema.safeParse({
+      ...base,
+      account_number: LRM + "1234 567 890" + PDF,
+      email: ZWSP + "hello@example.com" + LRM,
+      branch_code: LRM + "123456",
+      phone: LRM + "+27 81 286 7121" + PDF,
+    });
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.account_number).toBe("1234 567 890");
+      expect(r.data.email).toBe("hello@example.com");
+      expect(r.data.branch_code).toBe("123456");
+      expect(r.data.phone).toBe("+27 81 286 7121");
+    }
+  });
+
+  it("still rejects a genuinely bad account number", () => {
+    expect(
+      businessSettingsSchema.safeParse({ ...base, account_number: LRM + "12ab" }).success,
+    ).toBe(false);
+  });
+
+  it("cleans a price list code and a quote date", () => {
+    const item = priceItemSchema.parse({
+      code: LRM + "design" + ZWSP,
+      name: LRM + "Design",
+      kind: "once_off",
+      unit_price_cents: 500000,
+    });
+    expect(item.code).toBe("DESIGN");
+    expect(item.name).toBe("Design");
+    const q = quoteSettingsSchema.parse({
+      valid_until: LRM + "2026-12-12" + ZWSP,
+      deposit_percent: "50",
+      vat_rate_bps: "0",
+    });
+    expect(q.valid_until).toBe("2026-12-12");
+  });
+
+  it("keeps multi-line text as typed (terms keep their line breaks and quotes)", () => {
+    const terms = "Line one\n“Quoted” – line two";
+    const q = quoteSettingsSchema.parse({
+      valid_until: "2026-12-12",
+      deposit_percent: "50",
+      vat_rate_bps: "0",
+      terms,
+    });
+    expect(q.terms).toBe(terms);
+  });
+});
